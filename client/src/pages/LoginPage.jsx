@@ -34,7 +34,9 @@ const LoginPage = () => {
       });
     } catch (err) {
       console.error(err);
-      toast.error(err.message)
+      toast.error(err.message);
+    } finally {
+      toast.success(`Welcome ${loginData.username}`);
     }
   };
 

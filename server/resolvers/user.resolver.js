@@ -63,11 +63,13 @@ const userResolver = {
       try {
         const { username, password } = input;
         if (!username || !password) throw new Error("All fields are required");
-        const { user } = await context.authenticate("graphql-local", {
+        const { user, info } = await context.authenticate("graphql-local", {
           username,
           password,
         });
-
+        if (!user) {
+          throw new Error(info?.message || "Invalid credentials");
+        }
         await context.login(user);
         return user;
       } catch (err) {

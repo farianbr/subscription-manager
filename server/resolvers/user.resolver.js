@@ -29,6 +29,7 @@ const userResolver = {
     signUp: async (_, { input }) => {
       try {
         const { email, name, password, gender } = input;
+        if (!email || !password || !name || !gender) throw new Error("All fields are required");
 
       
         // check if user exists

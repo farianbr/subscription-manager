@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import TransactionFormSkeleton from "../components/skeletons/TransactionFormSkeleton";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@apollo/client/react";
-import { GET_TRANSACTION } from "../graphql/queries/transaction.queries";
+import {
+  GET_TRANSACTION,
+  GET_TRANSACTION_STATISTICS,
+  GET_TRANSACTIONS,
+} from "../graphql/queries/transaction.queries";
 import { UPDATE_TRANSACTION } from "../graphql/mutations/transaction.mutation";
 import toast from "react-hot-toast";
 
@@ -11,33 +15,41 @@ const TransactionPage = () => {
   const { loading, data } = useQuery(GET_TRANSACTION, {
     variables: { id },
   });
-
-  const [updateTransaction, {loading: loadingUpdate}] = useMutation(UPDATE_TRANSACTION)
+  const navigate = useNavigate();
+  const [updateTransaction, { loading: loadingUpdate }] = useMutation(
+    UPDATE_TRANSACTION,
+    {
+      refetchQueries: [
+        { query: GET_TRANSACTIONS },
+        { query: GET_TRANSACTION_STATISTICS },
+      ],
+    }
+  );
 
   const [formData, setFormData] = useState({
     description: data?.transaction?.description || "",
     paymentType: data?.transaction?.paymentType || "",
     category: data?.transaction?.category || "",
     amount: data?.transaction?.amount || "",
-    location: data?.transaction?.location || "",
-    date: data?.transaction?.date || "",
+    provider: data?.transaction?.provider || "",
+    endDate: data?.transaction?.endDate || "",
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const amount = parseFloat(formData.amount)
+    const amount = parseFloat(formData.amount);
     try {
       await updateTransaction({
         variables: {
-          input: {transactionId: id,...formData, amount}
-        }
-      })
-      toast.success("Transaction updated.")
+          input: { transactionId: id, ...formData, amount },
+        },
+      });
+      toast.success("Subscription updated.");
+      navigate("/");
     } catch (err) {
-      console.error(err)
-      toast.error(err.message)
+      console.error(err);
+      toast.error(err.message);
     }
-
   };
 
   const handleInputChange = (e) => {
@@ -55,18 +67,20 @@ const TransactionPage = () => {
         paymentType: data?.transaction?.paymentType,
         category: data?.transaction?.category,
         amount: data?.transaction?.amount,
-        location: data?.transaction?.location,
-        date: new Date(+data?.transaction?.date).toISOString().substr(0,10),
+        provider: data?.transaction?.provider,
+        endDate: new Date(+data?.transaction?.endDate)
+          .toISOString()
+          .substr(0, 10),
       });
     }
   }, [data]);
 
-  if (loading ) return <TransactionFormSkeleton />;
+  if (loading) return <TransactionFormSkeleton />;
 
   return (
     <div className="h-screen max-w-4xl mx-auto flex flex-col items-center">
       <p className="md:text-4xl text-2xl lg:text-4xl font-bold text-center relative z-50 mb-4 mr-4 bg-gradient-to-r from-pink-600 via-indigo-500 to-pink-400 inline-block text-transparent bg-clip-text">
-        Update this transaction
+        Update this subscription
       </p>
       <form
         className="w-full max-w-lg flex flex-col gap-5 px-3 "
@@ -79,14 +93,14 @@ const TransactionPage = () => {
               className="block uppercase tracking-wide text-white text-xs font-bold mb-2"
               htmlFor="description"
             >
-              Transaction
+              Service Description
             </label>
             <input
               className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
               id="description"
               name="description"
               type="text"
-              placeholder="Rent, Groceries, Salary, etc."
+              placeholder="Netflix premium, Google one, etc."
               value={formData.description}
               onChange={handleInputChange}
             />
@@ -107,10 +121,11 @@ const TransactionPage = () => {
                 id="paymentType"
                 name="paymentType"
                 onChange={handleInputChange}
-                defaultValue={formData.paymentType}
+                defaultValue={data?.transaction?.paymentType}
               >
                 <option value={"card"}>Card</option>
                 <option value={"cash"}>Cash</option>
+                <option value={"bkash"}>bKash</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                 <svg
@@ -138,11 +153,12 @@ const TransactionPage = () => {
                 id="category"
                 name="category"
                 onChange={handleInputChange}
-                defaultValue={formData.category}
+                defaultValue={data?.transaction?.category}
               >
-                <option value={"saving"}>Saving</option>
-                <option value={"expense"}>Expense</option>
-                <option value={"investment"}>Investment</option>
+                <option value={"entertainment"}>Entertainment</option>
+                <option value={"productivity"}>Productivity</option>
+                <option value={"utilities"}>Utilities</option>
+                <option value={"education"}>Education</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                 <svg
@@ -176,42 +192,42 @@ const TransactionPage = () => {
           </div>
         </div>
 
-        {/* LOCATION */}
+        {/* PROVIDER */}
         <div className="flex flex-wrap gap-3">
           <div className="w-full flex-1 mb-6 md:mb-0">
             <label
               className="block uppercase tracking-wide text-white text-xs font-bold mb-2"
-              htmlFor="location"
+              htmlFor="provider"
             >
-              Location
+              Service Provider
             </label>
             <input
               className="appearance-none block w-full bg-gray-200 text-gray-700 border  rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-              id="location"
-              name="location"
+              id="provider"
+              name="provider"
               type="text"
-              placeholder="New York"
-              value={formData.location}
+              placeholder="Netflix, Google, etc."
+              value={formData.provider}
               onChange={handleInputChange}
             />
           </div>
 
-          {/* DATE */}
+          {/* END DATE */}
           <div className="w-full flex-1">
             <label
               className="block uppercase tracking-wide text-white text-xs font-bold mb-2"
-              htmlFor="date"
+              htmlFor="endDate"
             >
-              Date
+              End Date
             </label>
             <input
               type="date"
-              name="date"
-              id="date"
+              name="endDate"
+              id="endDate"
               className="appearance-none block w-full bg-gray-200 text-gray-700 border  rounded py-[11px] px-4 mb-3 leading-tight focus:outline-none
 						 focus:bg-white"
               placeholder="Select date"
-              value={formData.date}
+              value={formData.endDate}
               onChange={handleInputChange}
             />
           </div>
@@ -223,7 +239,7 @@ const TransactionPage = () => {
           type="submit"
           disabled={loadingUpdate}
         >
-          {loadingUpdate ? "Updating..." : "Update Transaction"}
+          {loadingUpdate ? "Updating..." : "Update Subscription"}
         </button>
       </form>
     </div>

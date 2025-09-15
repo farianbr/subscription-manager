@@ -1,4 +1,9 @@
-const InputField = ({ label, id, name, type = "text", onChange, value }) => {
+const InputField = ({ label, id, name, type, onChange, value }) => {
+
+  if(!type){
+    type = "text"
+  }
+
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-gray-700">

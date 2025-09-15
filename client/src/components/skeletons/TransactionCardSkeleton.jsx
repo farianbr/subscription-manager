@@ -18,7 +18,7 @@ const SkeletonCard = () => {
         <div className="h-4 w-32 bg-gray-400 rounded"></div>
         {/* Amount */}
         <div className="h-4 w-28 bg-gray-400 rounded"></div>
-        {/* Location */}
+        {/* Provider */}
         <div className="h-4 w-24 bg-gray-400 rounded"></div>
 
         {/* Footer */}

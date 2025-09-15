@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 
 const LoginPage = () => {
   const [loginData, setLoginData] = useState({
-    username: "",
+    email: "",
     password: "",
   });
 
@@ -27,16 +27,15 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await login({
+      const { data } = await login({
         variables: {
           input: loginData,
         },
       });
+      toast.success(`Welcome ${data.login.name}`);
     } catch (err) {
       console.error(err);
       toast.error(err.message);
-    } finally {
-      toast.success(`Welcome ${loginData.username}`);
     }
   };
 
@@ -53,10 +52,11 @@ const LoginPage = () => {
             </h1>
             <form className="space-y-4" onSubmit={handleSubmit}>
               <InputField
-                label="Username"
-                id="username"
-                name="username"
-                value={loginData.username}
+                label="Email"
+                id="email"
+                name="email"
+                type="email"
+                value={loginData.email}
                 onChange={handleChange}
               />
 

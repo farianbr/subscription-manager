@@ -5,7 +5,7 @@ export const SIGN_UP = gql`
     signUp(input: $input) {
       _id
       name
-      username
+      email
     }
   }
 `;
@@ -14,7 +14,8 @@ export const LOGIN = gql`
   mutation Login($input: LoginInput!) {
     login(input: $input) {
       _id
-      username
+      email
+      name
     }
   }
 `;

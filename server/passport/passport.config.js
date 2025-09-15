@@ -3,12 +3,12 @@ import { GraphQLLocalStrategy as LocalStrategy } from "graphql-passport";
 import User from "../models/user.model.js"; // mongoose user model
 import bcrypt from "bcryptjs";
 
-// Local strategy (username + password)
+// Local strategy (email + password)
 export const configurePassport = async () => {
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
+    new LocalStrategy(async (email, password, done) => {
       try {
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ email });
         if (!user) return done(null, false, { message: "No user" });
 
         const match = await bcrypt.compare(password, user.password);

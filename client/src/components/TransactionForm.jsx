@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 
 const TransactionForm = () => {
   const [createTransaction, { loading }] = useMutation(CREATE_TRANSACTION, {
-    refetchQueries: ["GetTransactions"]
+    refetchQueries: ["GetTransactions", "GetTransactionStatistics"],
   });
 
   const handleSubmit = async (e) => {
@@ -17,14 +17,15 @@ const TransactionForm = () => {
       paymentType: formData.get("paymentType"),
       category: formData.get("category"),
       amount: parseFloat(formData.get("amount") || "0"),
-      location: formData.get("location"),
-      date: formData.get("date"),
+      provider: formData.get("provider"),
+      endDate: formData.get("endDate"),
+      alertEnabled: formData.get("alertEnabled") === "on",
     };
     try {
       await createTransaction({ variables: { input: transactionData } });
 
-      form.reset()
-      toast.success("Transaction created successfully")
+      form.reset();
+      toast.success("Subscription created successfully");
     } catch (err) {
       console.error(err);
       toast.error(err.message);
@@ -43,7 +44,7 @@ const TransactionForm = () => {
             className="block uppercase tracking-wide text-white text-xs font-bold mb-2"
             htmlFor="description"
           >
-            Transaction
+            Service Description
           </label>
           <input
             className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
@@ -51,7 +52,7 @@ const TransactionForm = () => {
             name="description"
             type="text"
             required
-            placeholder="Rent, Groceries, Salary, etc."
+            placeholder="Netflix premium, Google one, etc."
           />
         </div>
       </div>
@@ -72,6 +73,7 @@ const TransactionForm = () => {
             >
               <option value={"card"}>Card</option>
               <option value={"cash"}>Cash</option>
+              <option value={"bkash"}>bKash</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
               <svg
@@ -99,9 +101,10 @@ const TransactionForm = () => {
               id="category"
               name="category"
             >
-              <option value={"saving"}>Saving</option>
-              <option value={"expense"}>Expense</option>
-              <option value={"investment"}>Investment</option>
+              <option value={"entertainment"}>Entertainment</option>
+              <option value={"productivity"}>Productivity</option>
+              <option value={"utilities"}>Utilities</option>
+              <option value={"education"}>Education</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
               <svg
@@ -133,42 +136,56 @@ const TransactionForm = () => {
         </div>
       </div>
 
-      {/* LOCATION */}
+      {/* PROVIDER */}
       <div className="flex flex-wrap gap-3">
         <div className="w-full flex-1 mb-6 md:mb-0">
           <label
             className="block uppercase tracking-wide text-white text-xs font-bold mb-2"
-            htmlFor="location"
+            htmlFor="provider"
           >
-            Location
+            Service Provider
           </label>
           <input
             className="appearance-none block w-full bg-gray-200 text-gray-700 border  rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-            id="location"
-            name="location"
+            id="provider"
+            name="provider"
             type="text"
-            placeholder="New York"
+            placeholder="Netflix, Google, etc."
           />
         </div>
 
-        {/* DATE */}
+        {/* END DATE */}
         <div className="w-full flex-1">
           <label
             className="block uppercase tracking-wide text-white text-xs font-bold mb-2"
-            htmlFor="date"
+            htmlFor="endDate"
           >
-            Date
+            End Date
           </label>
           <input
             type="date"
-            name="date"
-            id="date"
+            name="endDate"
+            id="endDate"
             className="appearance-none block w-full bg-gray-200 text-gray-700 border  rounded py-[11px] px-4 mb-3 leading-tight focus:outline-none
 						 focus:bg-white"
             placeholder="Select date"
           />
         </div>
       </div>
+
+      {/* ALERT ENABLED */}
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="alertEnabled"
+          name="alertEnabled"
+          className="w-4 h-4"
+        />
+        <label htmlFor="alertEnabled" className="text-white text-sm">
+          Send me an alert 1 day before
+        </label>
+      </div>
+
       {/* SUBMIT BUTTON */}
       <button
         className="text-white font-bold w-full rounded px-4 py-2 bg-gradient-to-br
@@ -177,7 +194,7 @@ const TransactionForm = () => {
         type="submit"
         disabled={loading}
       >
-        {loading ? "Loading..." : "Add Transaction"}
+        {loading ? "Loading..." : "Add Subscription"}
       </button>
     </form>
   );

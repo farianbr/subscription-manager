@@ -1,4 +1,3 @@
-import { users } from "../dummyData/data.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 
@@ -27,24 +26,24 @@ const userResolver = {
   Mutation: {
     signUp: async (_, { input }, context) => {
       try {
-        const { username, name, password, gender } = input;
+        const { email, name, password, gender } = input;
 
         // check if user exists
-        const existingUser = await User.findOne({ username });
+        const existingUser = await User.findOne({ email });
         if (existingUser) {
-          throw new Error("Username already taken");
+          throw new Error("Email already in use");
         }
 
         // hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // https://avatar-placeholder.iran.liara.run/
-        const boyProfilePic = `https://avatar.iran.liara.run/public/boy?username=${username}`;
-        const girlProfilePic = `https://avatar.iran.liara.run/public/girl?username=${username}`;
+        const boyProfilePic = `https://avatar.iran.liara.run/public/boy?email=${email}`;
+        const girlProfilePic = `https://avatar.iran.liara.run/public/girl?email=${email}`;
 
         // create user
         const newUser = new User({
-          username,
+          email,
           name,
           password: hashedPassword,
           gender,
@@ -61,10 +60,10 @@ const userResolver = {
     },
     login: async (_, { input }, context) => {
       try {
-        const { username, password } = input;
-        if (!username || !password) throw new Error("All fields are required");
+        const { email, password } = input;
+        if (!email || !password) throw new Error("All fields are required");
         const { user, info } = await context.authenticate("graphql-local", {
-          username,
+          email,
           password,
         });
         if (!user) {

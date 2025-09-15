@@ -11,8 +11,8 @@ const transactionResolver = {
         const transactions = await Transaction.find({ userId });
         return transactions;
       } catch (err) {
-        console.error("Error getting transactions:", err);
-        throw new Error("Error getting transactions");
+        console.error("Error getting subscriptions:", err);
+        throw new Error("Error getting subscriptions");
       }
     },
     transaction: async (_, { transactionId }) => {
@@ -20,9 +20,28 @@ const transactionResolver = {
         const transaction = await Transaction.findById(transactionId);
         return transaction;
       } catch (err) {
-        console.error("Error getting transaction:", err);
-        throw new Error("Error getting transaction");
+        console.error("Error getting subscription:", err);
+        throw new Error("Error getting subscription");
       }
+    },
+    categoryStatistics: async (_, __, context) => {
+      if (!context.getUser()) throw new Error("Unauthorized");
+
+      const userId = context.getUser()._id;
+      const transactions = await Transaction.find({ userId });
+      const categoryMap = {};
+
+      transactions.forEach((transaction) => {
+        if (!categoryMap[transaction.category]) {
+          categoryMap[transaction.category] = 0;
+        }
+        categoryMap[transaction.category] += transaction.amount;
+      });
+
+      return Object.entries(categoryMap).map(([category, totalAmount]) => ({
+        category,
+        totalAmount,
+      }));
     },
   },
   Mutation: {
@@ -35,8 +54,8 @@ const transactionResolver = {
         await newTransaction.save();
         return newTransaction;
       } catch (err) {
-        console.error("Error creating transaction:", err);
-        throw new Error("Error creating transaction");
+        console.error("Error creating subscription:", err);
+        throw new Error("Error creating subscription");
       }
     },
     updateTransaction: async (_, { input }) => {
@@ -50,8 +69,8 @@ const transactionResolver = {
         );
         return updatedTransaction;
       } catch (err) {
-        console.error("Error updating transaction:", err);
-        throw new Error("Error updating transaction");
+        console.error("Error updating subscription:", err);
+        throw new Error("Error updating subscription");
       }
     },
     deleteTransaction: async (_, { transactionId }) => {
@@ -61,8 +80,8 @@ const transactionResolver = {
         );
         return deletedTransaction;
       } catch (err) {
-        console.error("Error deleting transaction:", err);
-        throw new Error("Error deleting transaction");
+        console.error("Error deleting subscription:", err);
+        throw new Error("Error deleting subscription");
       }
     },
   },

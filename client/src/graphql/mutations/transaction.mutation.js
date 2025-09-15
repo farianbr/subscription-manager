@@ -8,8 +8,10 @@ export const CREATE_TRANSACTION = gql`
       paymentType
       category
       amount
-      location
-      date
+      provider
+      endDate
+      alertEnabled
+      alertSentForDateMinus1
     }
   }
 `;
@@ -22,8 +24,10 @@ export const UPDATE_TRANSACTION = gql`
       paymentType
       category
       amount
-      location
-      date
+      provider
+      endDate
+      alertEnabled
+      alertSentForDateMinus1
     }
   }
 `;

@@ -10,7 +10,7 @@ import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
 const SignUpPage = () => {
   const [signUpData, setSignUpData] = useState({
     name: "",
-    username: "",
+    email: "",
     password: "",
     gender: "",
   });
@@ -47,7 +47,7 @@ const SignUpPage = () => {
       console.error(err);
       toast.error(err.message);
     } finally {
-      toast.success(`Welcome ${signUpData.username}`);
+      toast.success(`Welcome ${signUpData.name}`);
       // navigate("/")
     }
   };
@@ -72,10 +72,11 @@ const SignUpPage = () => {
                 onChange={handleChange}
               />
               <InputField
-                label="Username"
-                id="username"
-                name="username"
-                value={signUpData.username}
+                label="Email"
+                id="email"
+                name="email"
+                type="email"
+                value={signUpData.email}
                 onChange={handleChange}
               />
 

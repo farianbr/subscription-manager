@@ -16,8 +16,11 @@ import mergedResolvers from "./resolvers/index.js";
 import mergedTypeDefs from "./typeDefs/index.js";
 import { connectDB } from "./db/connectDB.js";
 import { configurePassport } from "./passport/passport.config.js";
+import { scheduleDailyReminders } from "./jobs/reminderJob.js";
 
 dotenv.config();
+
+scheduleDailyReminders()
 
 configurePassport()
 

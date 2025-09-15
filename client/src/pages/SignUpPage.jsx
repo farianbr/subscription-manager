@@ -15,7 +15,7 @@ const SignUpPage = () => {
     gender: "",
   });
   // const navigate = useNavigate()
-  const [signUp, { loading, error }] = useMutation(SIGN_UP);
+  const [signUp, { loading }] = useMutation(SIGN_UP);
   const navigate = useNavigate();
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -127,7 +127,6 @@ const SignUpPage = () => {
                 >
                   {loading ? "Loading..." : "Sign Up"}
                 </button>
-                <p className="text-red-500 text-center text-sm">{error}</p>
               </div>
             </form>
             <div className="mt-4 text-sm text-gray-600 text-center">

@@ -1,6 +1,6 @@
 # 📊 Subscription Manager
 
-A full-stack **subscription and expense manager** built with **GraphQL, Apollo, MongoDB, React, and TailwindCSS**.  
+A full-stack **subscription manager** built with **GraphQL, Apollo, MongoDB, React, and TailwindCSS**.  
 It helps users keep track of their subscriptions, set alerts, and receive email reminders before renewals.
 
 ---
@@ -63,4 +63,3 @@ It helps users keep track of their subscriptions, set alerts, and receive email 
 - Active vs. Inactive status (based on end date).
 - Allow users to change reminder frequency.
 
----

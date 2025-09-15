@@ -15,9 +15,7 @@ const SignUpPage = () => {
     gender: "",
   });
   // const navigate = useNavigate()
-  const [signUp, { loading, error }] = useMutation(SIGN_UP, {
-    refetchQueries: ["GET_AUTHENTICATED_USER"],
-  });
+  const [signUp, { loading, error }] = useMutation(SIGN_UP);
   const navigate = useNavigate();
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -61,12 +59,8 @@ const SignUpPage = () => {
         navigate("/login");
       }
     } catch (err) {
-      let errorMessage =
-        err?.graphQLErrors?.[0]?.message ||
-        err?.networkError?.message ||
-        err?.message ||
-        "Something went wrong";
-      toast.error(errorMessage);
+      console.error(err);
+      toast.error(err.message);
     }
   };
 

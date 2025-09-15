@@ -11,7 +11,6 @@ function getTomorrowBounds() {
   const start = new Date(tomorrow);
   const end = new Date(tomorrow);
   end.setUTCDate(end.getUTCDate() + 1);
-  console.log("bounds", start, end);
 
   return { start, end };
 }
@@ -29,8 +28,6 @@ export function scheduleDailyReminders() {
           alertEnabled: true,
           alertSentForDateMinus1: { $ne: true },
         }).lean();
-
-        console.log("txns", txns);
 
         if (!txns.length) return;
 
@@ -63,7 +60,7 @@ Subscription Manager • yourdomain.com
       <footer style="font-size:12px; color:#777">
         <p>You are receiving this email because you enabled alerts in Subscription Manager.</p>
         <p>If you no longer wish to receive these, you can disable alerts in your account settings.</p>
-        <p>Subscription Manager • <a href="https://yourdomain.com" style="color:#555">yourdomain.com</a></p>
+        <p>Subscription Manager • <a href="https://subscription-manager-qgi7.onrender.com/" style="color:#555">subscription-manager.com</a></p>
       </footer>
     </div>
   `,

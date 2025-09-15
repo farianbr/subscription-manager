@@ -21,11 +21,11 @@ import { scheduleDailyReminders } from "./jobs/reminderJob.js";
 import User from "./models/user.model.js";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import { ApolloServerPluginLandingPageDisabled } from "@apollo/server/plugin/disabled";
+import callServer from "./jobs/callServer.js";
 
 dotenv.config();
 
-console.log("NODE_ENV is:", process.env.NODE_ENV);
-
+callServer.start()
 
 scheduleDailyReminders();
 
@@ -124,4 +124,4 @@ app.get("*path", (req, res) => {
 await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
 await connectDB();
 
-console.log("Server ready at http://localhost:4000/graphql");
+console.log("Server ready");

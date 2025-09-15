@@ -58,7 +58,7 @@ const userResolver = {
         await newUser.save();
 
         // send verification mail
-        const verifyUrl = `http://localhost:4000/verify-email?token=${token}`;
+        const verifyUrl = `https://subscription-manager-qgi7.onrender.com/verify-email?token=${token}`;
         await sendMail({
           to: email,
           subject: "Verify your email",

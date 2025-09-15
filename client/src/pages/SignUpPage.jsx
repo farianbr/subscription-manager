@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import RadioButton from "../components/RadioButton";
 import InputField from "../components/InputField";
 import { SIGN_UP } from "../graphql/mutations/user.mutation";
@@ -16,8 +16,11 @@ const SignUpPage = () => {
   });
   // const navigate = useNavigate()
   const [signUp, { loading, error }] = useMutation(SIGN_UP, {
-    refetchQueries: ["GET_AUTHENTICATED_USER"]
+    refetchQueries: ["GET_AUTHENTICATED_USER"],
   });
+  const navigate = useNavigate();
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
@@ -37,18 +40,33 @@ const SignUpPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!emailRegex.test(signUpData.email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
     try {
-      await signUp({
-        variables: {
-          input: signUpData,
-        },
+      const { data } = await signUp({
+        variables: { input: signUpData },
       });
+
+      if (data?.signUp) {
+        // show a success toast
+        toast.success(
+          "Signup successful! Please verify your email before logging in."
+        );
+
+        // redirect to login page
+        navigate("/login");
+      }
     } catch (err) {
-      console.error(err);
-      toast.error(err.message);
-    } finally {
-      toast.success(`Welcome ${signUpData.name}`);
-      // navigate("/")
+      let errorMessage =
+        err?.graphQLErrors?.[0]?.message ||
+        err?.networkError?.message ||
+        err?.message ||
+        "Something went wrong";
+      toast.error(errorMessage);
     }
   };
 

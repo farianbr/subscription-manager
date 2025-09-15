@@ -17,12 +17,13 @@ import mergedTypeDefs from "./typeDefs/index.js";
 import { connectDB } from "./db/connectDB.js";
 import { configurePassport } from "./passport/passport.config.js";
 import { scheduleDailyReminders } from "./jobs/reminderJob.js";
+import User from "./models/user.model.js";
 
 dotenv.config();
 
-scheduleDailyReminders()
+scheduleDailyReminders();
 
-configurePassport()
+configurePassport();
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -71,6 +72,25 @@ app.use(
     context: async ({ req, res }) => buildContext({ req, res }),
   })
 );
+
+app.get("/verify-email", async (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).send("Invalid token");
+
+  const user = await User.findOne({
+    verificationToken: token,
+    verificationTokenExpires: { $gt: Date.now() },
+  });
+
+  if (!user) return res.status(400).send("Token invalid or expired");
+
+  user.isVerified = true;
+  user.verificationToken = undefined;
+  user.verificationTokenExpires = undefined;
+  await user.save();
+
+  res.send("✅ Email verified successfully. You can now log in.");
+});
 
 await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
 await connectDB();

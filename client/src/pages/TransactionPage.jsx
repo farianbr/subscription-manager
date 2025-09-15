@@ -185,6 +185,7 @@ const TransactionPage = () => {
               id="amount"
               name="amount"
               type="number"
+              step="0.01"
               placeholder="150"
               value={formData.amount}
               onChange={handleInputChange}

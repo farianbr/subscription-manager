@@ -18,7 +18,7 @@ function getTomorrowBounds() {
 
 export function scheduleDailyReminders() {
   cron.schedule(
-    "* * * * *",
+    "0 9 * * *",
     async () => {
       // 9:00 AM every day
       try {

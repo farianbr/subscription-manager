@@ -131,6 +131,7 @@ const TransactionForm = () => {
             id="amount"
             name="amount"
             type="number"
+            step="0.01"
             placeholder="150"
           />
         </div>

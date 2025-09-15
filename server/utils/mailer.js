@@ -16,7 +16,7 @@ export const transporter = nodemailer.createTransport({
 export async function sendMail({ to, subject, text, html }) {
   try {
     const info = await transporter.sendMail({
-      from: '"Subscription Manager" <farianrahman1000@gmail.com>', // use a verified sender
+      from: '"Subscription Manager" <technoir.gadget@gmail.com>', // use a verified sender
       to,
       subject,
       text,

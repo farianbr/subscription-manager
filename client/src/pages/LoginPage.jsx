@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import {  useState } from "react";
 import InputField from "../components/InputField";
 import { useMutation } from "@apollo/client/react";
 import { LOGIN } from "../graphql/mutations/user.mutation";
@@ -38,6 +38,7 @@ const LoginPage = () => {
       toast.error(err.message);
     }
   };
+
 
   return (
     <div className="flex justify-center items-center h-screen">

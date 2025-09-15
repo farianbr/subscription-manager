@@ -23,10 +23,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["male", "female"],
     },
+    isVerified: { type: Boolean, default: false },
+    verificationToken: String,
+    verificationTokenExpires: Date,
   },
   { timestamps: true }
 );
 
-const User = mongoose.model("User", userSchema)
+const User = mongoose.model("User", userSchema);
 
-export default User
+export default User;

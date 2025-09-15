@@ -1,7 +1,7 @@
 import cron from "node-cron";
 import https from "https";
 
-const URL = "https://graphql-crash-course.onrender.com";
+const URL = "https://subscription-manager-qgi7.onrender.com";
 
 const callServer = new cron.schedule(
   "*/14 * * * *",

@@ -2,6 +2,7 @@ import http from "http";
 import cors from "cors";
 import express from "express";
 import dotenv from "dotenv";
+import path from "path";
 
 import ConnectMongo from "connect-mongodb-session";
 import session from "express-session";
@@ -18,8 +19,13 @@ import { connectDB } from "./db/connectDB.js";
 import { configurePassport } from "./passport/passport.config.js";
 import { scheduleDailyReminders } from "./jobs/reminderJob.js";
 import User from "./models/user.model.js";
+import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
+import { ApolloServerPluginLandingPageDisabled } from "@apollo/server/plugin/disabled";
 
 dotenv.config();
+
+console.log("NODE_ENV is:", process.env.NODE_ENV);
+
 
 scheduleDailyReminders();
 
@@ -27,6 +33,8 @@ configurePassport();
 
 const app = express();
 const httpServer = http.createServer(app);
+
+const __dirname = path.resolve();
 
 const MongoDBStore = ConnectMongo(session);
 
@@ -56,7 +64,13 @@ app.use(passport.session());
 const server = new ApolloServer({
   typeDefs: mergedTypeDefs,
   resolvers: mergedResolvers,
-  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+  plugins: [
+    ApolloServerPluginDrainHttpServer({ httpServer }),
+    ...(process.env.NODE_ENV === "production"
+      ? [ApolloServerPluginLandingPageDisabled()]
+      : [ApolloServerPluginLandingPageLocalDefault()]),
+  ],
+  introspection: process.env.NODE_ENV !== "production", // disable schema introspection in prod
 });
 
 await server.start();
@@ -72,6 +86,13 @@ app.use(
     context: async ({ req, res }) => buildContext({ req, res }),
   })
 );
+
+if (process.env.NODE_ENV === "production") {
+  app.get("/graphql", (req, res) => {
+    res.status(403).send("GraphQL GUI is disabled in production");
+  });
+}
+
 
 app.get("/verify-email", async (req, res) => {
   const { token } = req.query;
@@ -90,6 +111,14 @@ app.get("/verify-email", async (req, res) => {
   await user.save();
 
   res.send("✅ Email verified successfully. You can now log in.");
+});
+
+app.use(express.static(path.join(__dirname, "client/dist")));
+
+
+
+app.get("*path", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/dist", "index.html"));
 });
 
 await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));

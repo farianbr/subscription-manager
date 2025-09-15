@@ -117,7 +117,7 @@ const Card = ({ transaction }) => {
           Service Provider: {provider || "N/A"}
         </p>
         <div className="flex justify-between items-center">
-          <p className="text-xs text-black font-bold">{category}</p>
+          <p className="text-xs text-white font-bold">{category}</p>
           {/* Toggle with label */}
           <div className="flex items-center gap-2">
             <span className="text-white text-sm font-medium">Alert</span>

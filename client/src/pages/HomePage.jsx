@@ -152,7 +152,23 @@ const HomePage = () => {
         <div className="flex flex-wrap w-full justify-center items-center gap-6">
           {data?.categoryStatistics.length > 0 && (
             <div className="h-[330px] w-[330px] md:h-[360px] md:w-[360px]  ">
-              <Doughnut data={chartData} plugins={[centerTextPlugin]} />
+              <Doughnut
+                data={chartData}
+                plugins={[centerTextPlugin]}
+                options={{
+                  plugins: {
+                    legend: {
+                      labels: {
+                        color: "white", // change label text color
+                        font: {
+                          size: 14, // optional: adjust size
+                          weight: "bold", // optional: make bold
+                        },
+                      },
+                    },
+                  },
+                }}
+              />
             </div>
           )}
 

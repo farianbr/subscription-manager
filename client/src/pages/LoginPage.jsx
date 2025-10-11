@@ -8,8 +8,8 @@ import toast from "react-hot-toast";
 
 const LoginPage = () => {
   const [loginData, setLoginData] = useState({
-    email: "",
-    password: "",
+    email: "demo@subscriptionmanager.com",
+    password: "demo1234",
   });
 
   const [login, { loading }] = useMutation(LOGIN, {

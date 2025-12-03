@@ -15,6 +15,9 @@ const transactionSchema = new mongoose.Schema({
     enum: ["cash", "card", "bkash"],
     required: true,
   },
+  paymentMethodId: {
+    type: String,
+  },
   category: {
     type: String,
     enum: ["entertainment", "productivity", "utilities", "education"],
@@ -28,13 +31,35 @@ const transactionSchema = new mongoose.Schema({
     type: String,
     default: "Unknown",
   },
+  companyLogo: {
+    type: String,
+    default: "",
+  },
+  billingCycle: {
+    type: String,
+    enum: ["monthly", "yearly", "weekly"],
+    default: "monthly",
+  },
+  renewalDate: {
+    type: Date,
+    required: true,
+  },
+  // Keep endDate for backward compatibility
   endDate: {
     type: Date,
     required: true,
   },
+  status: {
+    type: String,
+    enum: ["active", "canceled"],
+    default: "active",
+  },
+  canceledAt: {
+    type: Date,
+  },
   alertEnabled: { type: Boolean, default: false },
   alertSentForDateMinus1: { type: Boolean, default: false },
-});
+}, { timestamps: true });
 
 const Transaction = mongoose.model("Transaction", transactionSchema);
 

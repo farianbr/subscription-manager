@@ -1,30 +1,53 @@
 import { CREATE_TRANSACTION } from "../graphql/mutations/transaction.mutation";
-import { useMutation } from "@apollo/client/react";
+import { useMutation, useQuery } from "@apollo/client/react";
+import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
+import { useState } from "react";
 import toast from "react-hot-toast";
+import { getCompanyOptions, getCompanyLogo } from "../lib/companyLogos";
 
 const TransactionForm = ({ onSuccess }) => {
+  const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
   const [createTransaction, { loading }] = useMutation(CREATE_TRANSACTION, {
     refetchQueries: ["GetTransactions", "GetTransactionStatistics"],
   });
+
+  const [selectedCompany, setSelectedCompany] = useState("google");
+  const [customCompanyName, setCustomCompanyName] = useState("");
+  const companyOptions = getCompanyOptions();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const form = e.target;
     const formData = new FormData(form);
+    
+    // Get company logo URL based on selection
+    const companyKey = formData.get("company");
+    const companyLogo = getCompanyLogo(companyKey);
+    
+    // Calculate renewalDate from endDate
+    const endDateValue = formData.get("endDate");
+    
     const transactionData = {
-      description: formData.get("description"),
-      paymentType: formData.get("paymentType"),
+      description: companyKey === "other" ? formData.get("customName") : formData.get("company"),
+      paymentType: "card", // Default value since we removed the field
       category: formData.get("category"),
       amount: parseFloat(formData.get("amount") || "0"),
-      provider: formData.get("provider"),
-      endDate: formData.get("endDate"),
+      provider: formData.get("serviceName") || "",
+      endDate: endDateValue,
+      renewalDate: endDateValue, // Set renewalDate same as endDate initially
       alertEnabled: formData.get("alertEnabled") === "on",
+      companyLogo: companyLogo,
+      billingCycle: formData.get("billingCycle") || "monthly",
+      paymentMethodId: formData.get("paymentMethodId") || null,
     };
+    
     try {
       await createTransaction({ variables: { input: transactionData } });
 
       form.reset();
+      setSelectedCompany("google");
+      setCustomCompanyName("");
       toast.success("Subscription created successfully");
       
       // Call onSuccess callback if provided (for modal)
@@ -39,182 +62,178 @@ const TransactionForm = ({ onSuccess }) => {
 
   return (
     <div className="relative">
-      <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-        <form
-          className="space-y-6"
-          onSubmit={handleSubmit}
-        >
-          {/* TRANSACTION */}
-          <div className="space-y-2">
-            <label
-              className="block text-slate-700 text-sm font-semibold"
-              htmlFor="description"
-            >
-              Service Description
-            </label>
-            <input
-              className="w-full bg-white/50 backdrop-blur-sm text-slate-800 border border-slate-200 rounded-xl py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-300 placeholder-slate-400"
-              id="description"
-              name="description"
-              type="text"
-              required
-              placeholder="Netflix Premium, Google One, etc."
-            />
-          </div>
-
-          {/* PAYMENT TYPE & CATEGORY & AMOUNT */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label
-                className="block text-slate-700 text-sm font-semibold"
-                htmlFor="paymentType"
-              >
-                Payment Type
-              </label>
-              <div className="relative">
-                <select
-                  className="w-full bg-white/50 backdrop-blur-sm text-slate-800 border border-slate-200 rounded-xl py-3 px-4 pr-8 leading-tight focus:outline-none focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-300 appearance-none"
-                  id="paymentType"
-                  name="paymentType"
-                >
-                  <option value={"card"}>Card</option>
-                  <option value={"cash"}>Cash</option>
-                  <option value={"bkash"}>bKash</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
-                  <svg
-                    className="fill-current h-4 w-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* CATEGORY */}
-            <div className="space-y-2">
-              <label
-                className="block text-slate-700 text-sm font-semibold"
-                htmlFor="category"
-              >
-                Category
-              </label>
-              <div className="relative">
-                <select
-                  className="w-full bg-white/50 backdrop-blur-sm text-slate-800 border border-slate-200 rounded-xl py-3 px-4 pr-8 leading-tight focus:outline-none focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-300 appearance-none"
-                  id="category"
-                  name="category"
-                >
-                  <option value={"entertainment"}>Entertainment</option>
-                  <option value={"productivity"}>Productivity</option>
-                  <option value={"utilities"}>Utilities</option>
-                  <option value={"education"}>Education</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
-                  <svg
-                    className="fill-current h-4 w-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* AMOUNT */}
-            <div className="space-y-2">
-              <label
-                className="block text-slate-700 text-sm font-semibold"
-                htmlFor="amount"
-              >
-                Amount ($)
-              </label>
-              <input
-                className="w-full bg-white/50 backdrop-blur-sm text-slate-800 border border-slate-200 rounded-xl py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-300 placeholder-slate-400"
-                id="amount"
-                name="amount"
-                type="number"
-                step="0.01"
-                placeholder="150.00"
-              />
-            </div>
-          </div>
-
-          {/* PROVIDER & END DATE */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label
-                className="block text-slate-700 text-sm font-semibold"
-                htmlFor="provider"
-              >
-                Service Provider
-              </label>
-              <input
-                className="w-full bg-white/50 backdrop-blur-sm text-slate-800 border border-slate-200 rounded-xl py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-300 placeholder-slate-400"
-                id="provider"
-                name="provider"
-                type="text"
-                placeholder="Netflix, Google, etc."
-              />
-            </div>
-
-            {/* END DATE */}
-            <div className="space-y-2">
-              <label
-                className="block text-slate-700 text-sm font-semibold"
-                htmlFor="endDate"
-              >
-                End Date
-              </label>
-              <input
-                type="date"
-                name="endDate"
-                id="endDate"
-                className="w-full bg-white/50 backdrop-blur-sm text-slate-800 border border-slate-200 rounded-xl py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-300"
-              />
-            </div>
-          </div>
-
-          {/* ALERT ENABLED */}
-          <div className="flex items-center space-x-3 p-4 rounded-xl bg-slate-50/50 border border-slate-200">
-            <input
-              type="checkbox"
-              id="alertEnabled"
-              name="alertEnabled"
-              className="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
-            />
-            <label htmlFor="alertEnabled" className="text-slate-700 text-sm font-medium">
-              Send me an alert 1 day before renewal
-            </label>
-          </div>
-
-          {/* SUBMIT BUTTON */}
-          <button
-            className="w-full relative group overflow-hidden bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg hover:shadow-xl"
-            type="submit"
-            disabled={loading}
+      <form className="space-y-5" onSubmit={handleSubmit}>
+        
+        {/* Company/Provider Selector */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="company">
+            Select Provider
+          </label>
+          <select
+            className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            id="company"
+            name="company"
+            value={selectedCompany}
+            onChange={(e) => setSelectedCompany(e.target.value)}
+            required
           >
-            <span className="relative flex items-center justify-center">
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
-                  Adding Subscription...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Add Subscription
-                </>
-              )}
-            </span>
-          </button>
-        </form>
-      </div>
+            {companyOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Custom Provider Name (shown when "Other" is selected) */}
+        {selectedCompany === "other" && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="customName">
+              Provider Name
+            </label>
+            <input
+              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              id="customName"
+              name="customName"
+              type="text"
+              value={customCompanyName}
+              onChange={(e) => setCustomCompanyName(e.target.value)}
+              placeholder="e.g., Custom Subscription Service"
+              required
+            />
+          </div>
+        )}
+
+        {/* Service Name */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="serviceName">
+            Service Name (Optional)
+          </label>
+          <input
+            className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            id="serviceName"
+            name="serviceName"
+            type="text"
+            placeholder="e.g., Netflix Premium, Spotify Family"
+          />
+        </div>
+
+        {/* Amount */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="amount">
+            Cost
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">$</span>
+            <input
+              className="w-full pl-7 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              id="amount"
+              name="amount"
+              type="number"
+              step="0.01"
+              placeholder="9.99"
+              required
+            />
+          </div>
+        </div>
+
+        {/* Category & Billing Cycle */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="category">
+              Category
+            </label>
+            <select
+              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              id="category"
+              name="category"
+            >
+              <option value="entertainment">Entertainment</option>
+              <option value="productivity">Productivity</option>
+              <option value="utilities">Utilities</option>
+              <option value="education">Education</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="billingCycle">
+              Billing Cycle
+            </label>
+            <select
+              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              id="billingCycle"
+              name="billingCycle"
+            >
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Payment Method (from user's saved methods) & Renewal Date */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="paymentMethodId">
+              Payment Method
+            </label>
+            <select
+              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              id="paymentMethodId"
+              name="paymentMethodId"
+              required
+            >
+              <option value="">Select Payment Method</option>
+              {userData?.authUser?.paymentMethods?.map((method) => (
+                <option key={method.id} value={method.id}>
+                  {method.name} {method.last4 && `(•••• ${method.last4})`} {method.isDefault && "- Default"}
+                </option>
+              ))}
+            </select>
+            {(!userData?.authUser?.paymentMethods || userData.authUser.paymentMethods.length === 0) && (
+              <p className="text-xs text-slate-500 mt-1">
+                Add payment methods in <a href="/settings" className="text-blue-600 hover:underline">Settings</a>
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="endDate">
+              Next Renewal Date
+            </label>
+            <input
+              type="date"
+              name="endDate"
+              id="endDate"
+              min={new Date().toISOString().split('T')[0]}
+              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              required
+            />
+          </div>
+        </div>
+
+        {/* Alert Checkbox */}
+        <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg border border-blue-100">
+          <input
+            type="checkbox"
+            id="alertEnabled"
+            name="alertEnabled"
+            className="mt-0.5 w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
+          />
+          <label htmlFor="alertEnabled" className="text-sm text-slate-700">
+            Send me a reminder 1 day before renewal
+          </label>
+        </div>
+
+        {/* Submit Button */}
+        <button
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          type="submit"
+          disabled={loading}
+        >
+          {loading ? "Adding..." : "Add Subscription"}
+        </button>
+      </form>
     </div>
   );
 };

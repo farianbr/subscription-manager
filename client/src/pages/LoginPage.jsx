@@ -41,54 +41,56 @@ const LoginPage = () => {
 
 
   return (
-    <div className="flex justify-center items-center h-screen">
-      <div className="flex rounded-lg overflow-hidden z-50 bg-gray-300">
-        <div className="w-full bg-gray-100 min-w-80 sm:min-w-96 flex items-center justify-center">
-          <div className="max-w-md w-full p-6">
-            <h1 className="text-3xl font-semibold mb-6 text-black text-center">
-              Login
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">
+              Welcome Back
             </h1>
-            <h1 className="text-sm font-semibold mb-6 text-gray-500 text-center">
-              Welcome back! Log in to your account
-            </h1>
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <InputField
-                label="Email"
-                id="email"
-                name="email"
-                type="email"
-                value={loginData.email}
-                onChange={handleChange}
-              />
+            <p className="text-slate-600">
+              Log in to manage your subscriptions
+            </p>
+          </div>
 
-              <InputField
-                label="Password"
-                id="password"
-                name="password"
-                type="password"
-                value={loginData.password}
-                onChange={handleChange}
-              />
-              <div>
-                <button
-                  type="submit"
-                  className="w-full bg-black text-white p-2 rounded-md hover:bg-gray-800 focus:outline-none focus:bg-black  focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors duration-300
-										disabled:opacity-50 disabled:cursor-not-allowed
-									"
-                  disabled={loading}
-                >
-                  {loading ? "Loading..." : "Login"}
-                </button>
-              </div>
-            </form>
-            <div className="mt-4 text-sm text-gray-600 text-center">
-              <p>
-                {"Don't"} have an account?{" "}
-                <Link to="/signup" className="text-black hover:underline">
-                  Sign Up
-                </Link>
-              </p>
-            </div>
+          {/* Form */}
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <InputField
+              label="Email"
+              id="email"
+              name="email"
+              type="email"
+              value={loginData.email}
+              onChange={handleChange}
+            />
+
+            <InputField
+              label="Password"
+              id="password"
+              name="password"
+              type="password"
+              value={loginData.password}
+              onChange={handleChange}
+            />
+
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Log In"}
+            </button>
+          </form>
+
+          {/* Footer */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-slate-600">
+              Don't have an account?{" "}
+              <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+                Sign up
+              </Link>
+            </p>
           </div>
         </div>
       </div>

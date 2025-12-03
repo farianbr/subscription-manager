@@ -5,7 +5,16 @@ export const GET_AUTHENTICATED_USER = gql`
     authUser {
       _id
       name
+      email
       profilePicture
+      currency
+      paymentMethods {
+        id
+        name
+        type
+        last4
+        isDefault
+      }
     }
   }
 `;

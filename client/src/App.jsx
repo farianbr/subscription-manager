@@ -3,6 +3,8 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
 import TransactionPage from "./pages/TransactionPage";
+import SettingsPage from "./pages/SettingsPage";
+import HistoryPage from "./pages/HistoryPage";
 import NotFound from "./pages/NotFound";
 import Header from "./components/ui/Header";
 import ScrollToTop from "./components/ui/ScrollToTop";
@@ -16,14 +18,11 @@ function App() {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Subscription Manager</h2>
+          <div className="w-12 h-12 border-3 border-slate-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Subscription Manager</h2>
           <p className="text-slate-600">Loading your dashboard...</p>
-          <div className="mt-4 flex justify-center">
-            <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
-          </div>
         </div>
       </div>
     );
@@ -50,6 +49,18 @@ function App() {
           path="/transaction/:id"
           element={
             data.authUser ? <TransactionPage /> : <Navigate to="/login" />
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            data.authUser ? <SettingsPage /> : <Navigate to="/login" />
+          }
+        />
+        <Route
+          path="/history"
+          element={
+            data.authUser ? <HistoryPage /> : <Navigate to="/login" />
           }
         />
         <Route path="*" element={<NotFound />} />{" "}

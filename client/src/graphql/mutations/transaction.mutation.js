@@ -12,6 +12,11 @@ export const CREATE_TRANSACTION = gql`
       endDate
       alertEnabled
       alertSentForDateMinus1
+      companyLogo
+      billingCycle
+      paymentMethodId
+      renewalDate
+      status
     }
   }
 `;
@@ -28,14 +33,29 @@ export const UPDATE_TRANSACTION = gql`
       endDate
       alertEnabled
       alertSentForDateMinus1
+      companyLogo
+      billingCycle
+      paymentMethodId
+      renewalDate
+      status
     }
   }
 `;
 
 export const DELETE_TRANSACTION = gql`
-    mutation DeleteTransaction($transactionId: ID!){
-        deleteTransaction(transactionId: $transactionId){
-            _id
-        }
+  mutation DeleteTransaction($transactionId: ID!) {
+    deleteTransaction(transactionId: $transactionId) {
+      _id
     }
-`
+  }
+`;
+
+export const CANCEL_SUBSCRIPTION = gql`
+  mutation CancelSubscription($transactionId: ID!) {
+    cancelSubscription(transactionId: $transactionId) {
+      _id
+      status
+      canceledAt
+    }
+  }
+`;

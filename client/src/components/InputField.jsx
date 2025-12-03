@@ -6,16 +6,17 @@ const InputField = ({ label, id, name, type, onChange, value }) => {
 
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700">
+      <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1.5">
         {label}
       </label>
       <input
-        className="mt-1 p-2 w-full border rounded-md text-black focus:border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-colors duration-300"
+        className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
         id={id}
         type={type}
         name={name}
         value={value}
         onChange={onChange}
+        required
       />
     </div>
   );

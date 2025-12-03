@@ -6,6 +6,16 @@ const userTypeDef = `#graphql
         password: String!
         gender: String!
         profilePicture: String
+        currency: String
+        paymentMethods: [PaymentMethod]
+    }
+
+    type PaymentMethod {
+        id: String!
+        name: String!
+        type: String!
+        last4: String
+        isDefault: Boolean!
     }
 
     type Query {
@@ -17,6 +27,11 @@ const userTypeDef = `#graphql
         signUp(input: SignUpInput!): User
         login(input: LoginInput!): User
         logout: LogoutResponse
+        updateProfile(input: UpdateProfileInput!): User
+        updatePassword(input: UpdatePasswordInput!): User
+        addPaymentMethod(input: PaymentMethodInput!): User
+        removePaymentMethod(paymentMethodId: String!): User
+        setDefaultPaymentMethod(paymentMethodId: String!): User
     }
 
     input SignUpInput {
@@ -29,6 +44,24 @@ const userTypeDef = `#graphql
     input LoginInput {
         email: String!
         password: String!
+    }
+
+    input UpdateProfileInput {
+        name: String
+        email: String
+        currency: String
+    }
+
+    input UpdatePasswordInput {
+        currentPassword: String!
+        newPassword: String!
+    }
+
+    input PaymentMethodInput {
+        name: String!
+        type: String!
+        last4: String
+        isDefault: Boolean
     }
 
     type LogoutResponse{

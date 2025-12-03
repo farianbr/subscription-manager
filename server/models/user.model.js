@@ -26,6 +26,20 @@ const userSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: false },
     verificationToken: String,
     verificationTokenExpires: Date,
+    currency: {
+      type: String,
+      default: "USD",
+      enum: ["USD", "EUR", "GBP", "INR", "BDT", "CAD", "AUD"],
+    },
+    paymentMethods: [
+      {
+        id: String,
+        name: String,
+        type: { type: String, enum: ["card", "cash", "bkash", "other"] },
+        last4: String,
+        isDefault: Boolean,
+      },
+    ],
   },
   { timestamps: true }
 );

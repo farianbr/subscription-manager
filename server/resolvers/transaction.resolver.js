@@ -8,7 +8,10 @@ const transactionResolver = {
         if (!context.getUser()) throw new Error("Unauthorized");
         const userId = await context.getUser()._id;
 
-        const transactions = await Transaction.find({ userId });
+        const transactions = await Transaction.find({ 
+          userId,
+          status: "active" 
+        }).sort({ createdAt: -1 });
         return transactions;
       } catch (err) {
         console.error("Error getting subscriptions:", err);
@@ -28,7 +31,10 @@ const transactionResolver = {
       if (!context.getUser()) throw new Error("Unauthorized");
 
       const userId = context.getUser()._id;
-      const transactions = await Transaction.find({ userId });
+      const transactions = await Transaction.find({ 
+        userId,
+        status: "active"
+      });
       const categoryMap = {};
 
       transactions.forEach((transaction) => {
@@ -43,6 +49,40 @@ const transactionResolver = {
         totalAmount,
       }));
     },
+    monthlyHistory: async (_, __, context) => {
+      try {
+        if (!context.getUser()) throw new Error("Unauthorized");
+        const userId = context.getUser()._id;
+
+        const allTransactions = await Transaction.find({ userId }).sort({ createdAt: -1 });
+        
+        const historyMap = {};
+        
+        allTransactions.forEach((transaction) => {
+          const date = new Date(transaction.createdAt);
+          const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          
+          if (!historyMap[monthYear]) {
+            historyMap[monthYear] = {
+              month: date.toLocaleString('default', { month: 'long' }),
+              year: date.getFullYear(),
+              transactions: [],
+              totalSpent: 0,
+            };
+          }
+          
+          historyMap[monthYear].transactions.push(transaction);
+          historyMap[monthYear].totalSpent += transaction.amount;
+        });
+
+        return Object.values(historyMap).sort((a, b) => {
+          return b.year - a.year || (new Date(b.month + ' 1, 2000') - new Date(a.month + ' 1, 2000'));
+        });
+      } catch (err) {
+        console.error("Error getting monthly history:", err);
+        throw new Error("Error getting monthly history");
+      }
+    },
   },
   Mutation: {
     createTransaction: async (_, { input }, context) => {
@@ -50,6 +90,8 @@ const transactionResolver = {
         const newTransaction = new Transaction({
           ...input,
           userId: context.getUser()._id,
+          renewalDate: input.renewalDate || input.endDate,
+          status: "active",
         });
         await newTransaction.save();
         return newTransaction;
@@ -60,12 +102,15 @@ const transactionResolver = {
     },
     updateTransaction: async (_, { input }) => {
       try {
+        const updateData = { ...input };
+        if (input.renewalDate) {
+          updateData.endDate = input.renewalDate;
+        }
+        
         const updatedTransaction = await Transaction.findByIdAndUpdate(
           input.transactionId,
-          input,
-          {
-            new: true,
-          }
+          updateData,
+          { new: true }
         );
         return updatedTransaction;
       } catch (err) {
@@ -82,6 +127,25 @@ const transactionResolver = {
       } catch (err) {
         console.error("Error deleting subscription:", err);
         throw new Error("Error deleting subscription");
+      }
+    },
+    cancelSubscription: async (_, { transactionId }, context) => {
+      try {
+        if (!context.getUser()) throw new Error("Unauthorized");
+        
+        const canceledTransaction = await Transaction.findByIdAndUpdate(
+          transactionId,
+          { 
+            status: "canceled",
+            canceledAt: new Date()
+          },
+          { new: true }
+        );
+        
+        return canceledTransaction;
+      } catch (err) {
+        console.error("Error canceling subscription:", err);
+        throw new Error("Error canceling subscription");
       }
     },
   },

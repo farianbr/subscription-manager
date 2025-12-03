@@ -115,6 +115,124 @@ const userResolver = {
         throw new Error(err.message || "Internal server error");
       }
     },
+
+    updateProfile: async (_, { input }, context) => {
+      try {
+        const user = await context.getUser();
+        if (!user) throw new Error("Unauthorized");
+
+        const { name, email, currency } = input;
+        
+        if (email && email !== user.email) {
+          const existingUser = await User.findOne({ email });
+          if (existingUser) throw new Error("Email already in use");
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+          user._id,
+          { 
+            ...(name && { name }),
+            ...(email && { email }),
+            ...(currency && { currency })
+          },
+          { new: true }
+        );
+
+        return updatedUser;
+      } catch (err) {
+        console.error("Error in updateProfile:", err);
+        throw new Error(err.message || "Internal server error");
+      }
+    },
+
+    updatePassword: async (_, { input }, context) => {
+      try {
+        const user = await context.getUser();
+        if (!user) throw new Error("Unauthorized");
+
+        const { currentPassword, newPassword } = input;
+        
+        const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+        if (!isValidPassword) throw new Error("Current password is incorrect");
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        
+        const updatedUser = await User.findByIdAndUpdate(
+          user._id,
+          { password: hashedPassword },
+          { new: true }
+        );
+
+        return updatedUser;
+      } catch (err) {
+        console.error("Error in updatePassword:", err);
+        throw new Error(err.message || "Internal server error");
+      }
+    },
+
+    addPaymentMethod: async (_, { input }, context) => {
+      try {
+        const user = await context.getUser();
+        if (!user) throw new Error("Unauthorized");
+
+        const { name, type, last4, isDefault } = input;
+        
+        const newPaymentMethod = {
+          id: crypto.randomBytes(16).toString("hex"),
+          name,
+          type,
+          last4,
+          isDefault: isDefault || false,
+        };
+
+        // If this is set as default, unset other defaults
+        if (isDefault) {
+          user.paymentMethods.forEach(pm => pm.isDefault = false);
+        }
+
+        user.paymentMethods.push(newPaymentMethod);
+        await user.save();
+
+        return user;
+      } catch (err) {
+        console.error("Error in addPaymentMethod:", err);
+        throw new Error(err.message || "Internal server error");
+      }
+    },
+
+    removePaymentMethod: async (_, { paymentMethodId }, context) => {
+      try {
+        const user = await context.getUser();
+        if (!user) throw new Error("Unauthorized");
+
+        user.paymentMethods = user.paymentMethods.filter(
+          pm => pm.id !== paymentMethodId
+        );
+        
+        await user.save();
+        return user;
+      } catch (err) {
+        console.error("Error in removePaymentMethod:", err);
+        throw new Error(err.message || "Internal server error");
+      }
+    },
+
+    setDefaultPaymentMethod: async (_, { paymentMethodId }, context) => {
+      try {
+        const user = await context.getUser();
+        if (!user) throw new Error("Unauthorized");
+
+        user.paymentMethods.forEach(pm => {
+          pm.isDefault = pm.id === paymentMethodId;
+        });
+        
+        await user.save();
+        return user;
+      } catch (err) {
+        console.error("Error in setDefaultPaymentMethod:", err);
+        throw new Error(err.message || "Internal server error");
+      }
+    },
   },
 };
 

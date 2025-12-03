@@ -65,42 +65,52 @@ const SignUpPage = () => {
   };
 
   return (
-    <div className="h-screen flex justify-center items-center">
-      <div className="flex rounded-lg overflow-hidden z-50 bg-gray-300">
-        <div className="w-full bg-gray-100 min-w-80 sm:min-w-96 flex items-center justify-center">
-          <div className="max-w-md w-full p-6">
-            <h1 className="text-3xl font-semibold mb-6 text-black text-center">
-              Sign Up
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">
+              Create Account
             </h1>
-            <h1 className="text-sm font-semibold mb-6 text-gray-500 text-center">
-              Join to manage your subscriptions
-            </h1>
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <InputField
-                label="Full Name"
-                id="name"
-                name="name"
-                value={signUpData.name}
-                onChange={handleChange}
-              />
-              <InputField
-                label="Email"
-                id="email"
-                name="email"
-                type="email"
-                value={signUpData.email}
-                onChange={handleChange}
-              />
+            <p className="text-slate-600">
+              Start tracking your subscriptions today
+            </p>
+          </div>
 
-              <InputField
-                label="Password"
-                id="password"
-                name="password"
-                type="password"
-                value={signUpData.password}
-                onChange={handleChange}
-              />
-              <div className="flex gap-10">
+          {/* Form */}
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <InputField
+              label="Full Name"
+              id="name"
+              name="name"
+              value={signUpData.name}
+              onChange={handleChange}
+            />
+            
+            <InputField
+              label="Email"
+              id="email"
+              name="email"
+              type="email"
+              value={signUpData.email}
+              onChange={handleChange}
+            />
+
+            <InputField
+              label="Password"
+              id="password"
+              name="password"
+              type="password"
+              value={signUpData.password}
+              onChange={handleChange}
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-3">
+                Gender
+              </label>
+              <div className="flex gap-6">
                 <RadioButton
                   id="male"
                   label="Male"
@@ -118,25 +128,25 @@ const SignUpPage = () => {
                   checked={signUpData.gender === "female"}
                 />
               </div>
-
-              <div>
-                <button
-                  type="submit"
-                  className="w-full bg-black text-white p-2 rounded-md hover:bg-gray-800 focus:outline-none focus:bg-black  focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={loading}
-                >
-                  {loading ? "Loading..." : "Sign Up"}
-                </button>
-              </div>
-            </form>
-            <div className="mt-4 text-sm text-gray-600 text-center">
-              <p>
-                Already have an account?{" "}
-                <Link to="/login" className="text-black hover:underline">
-                  Login here
-                </Link>
-              </p>
             </div>
+
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+            >
+              {loading ? "Creating account..." : "Sign Up"}
+            </button>
+          </form>
+
+          {/* Footer */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-slate-600">
+              Already have an account?{" "}
+              <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+                Log in
+              </Link>
+            </p>
           </div>
         </div>
       </div>

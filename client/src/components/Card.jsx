@@ -4,7 +4,7 @@ import { formatDate } from "../lib/utils";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import {
-  CANCEL_SUBSCRIPTION,
+  DELETE_SUBSCRIPTION,
   UPDATE_SUBSCRIPTION,
 } from "../graphql/mutations/subscription.mutation";
 import { useMutation, useQuery } from "@apollo/client/react";
@@ -12,6 +12,7 @@ import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
 import Modal from "./ui/Modal";
 import { useCurrency } from "../context/CurrencyContext";
 import EditTransactionForm from "./EditTransactionForm";
+import { getCompanyLogo } from "../lib/companyLogos";
 
 const categoryColorMap = {
   Productivity: "bg-emerald-50 border-emerald-200",
@@ -31,23 +32,22 @@ const Card = ({ subscription }) => {
   let {
     _id,
     category,
-    amount,
+    costInDollar,
     provider,
     nextBillingDate,
-    description,
+    serviceName,
     alertEnabled,
-    companyLogo,
     billingCycle,
     paymentMethodId,
   } = subscription;
 
-  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
   const { formatCurrency } = useCurrency();
 
-  const [cancelSubscription, { loading: cancelLoading }] = useMutation(
-    CANCEL_SUBSCRIPTION,
+  const [deleteSubscription, { loading: deleteLoading }] = useMutation(
+    DELETE_SUBSCRIPTION,
     {
       refetchQueries: ["GetSubscriptions", "GetSubscriptionStatistics"],
     }
@@ -66,7 +66,10 @@ const Card = ({ subscription }) => {
       (method) => method.id === paymentMethodId
     )?.name || "Unknown";
 
-  description = description[0]?.toUpperCase() + description.slice(1);
+  // Get company logo dynamically
+  const companyLogo = getCompanyLogo(provider);
+
+  serviceName = serviceName[0]?.toUpperCase() + serviceName.slice(1);
   category = category[0]?.toUpperCase() + category.slice(1);
 
   // Use nextBillingDate for display
@@ -75,15 +78,15 @@ const Card = ({ subscription }) => {
   const cardClass = categoryColorMap[category];
   const iconColor = categoryIconColor[category];
 
-  const handleCancelRenewal = async () => {
+  const handleDeleteSubscription = async () => {
     try {
-      await cancelSubscription({
+      await deleteSubscription({
         variables: {
           subscriptionId: _id,
         },
       });
-      toast.success("Subscription canceled successfully");
-      setShowCancelModal(false);
+      toast.success("Subscription deleted successfully");
+      setShowDeleteModal(false);
     } catch (err) {
       console.error(err);
       toast.error(err.message);
@@ -101,7 +104,7 @@ const Card = ({ subscription }) => {
         },
       });
       toast.success(
-        `Alerts ${!alertEnabled ? "enabled" : "disabled"} for ${description}`
+        `Alerts ${!alertEnabled ? "enabled" : "disabled"} for ${serviceName}`
       );
     } catch (err) {
       console.error(err);
@@ -122,22 +125,22 @@ const Card = ({ subscription }) => {
               {companyLogo ? (
                 <img
                   src={companyLogo}
-                  alt={provider || description}
+                  alt={serviceName}
                   className="w-10 h-10 rounded-lg object-contain bg-slate-50 p-1 border border-slate-200"
                 />
               ) : (
                 <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200">
                   <span className="text-slate-500 text-lg font-bold">
-                    {(provider || description).charAt(0).toUpperCase()}
+                    {serviceName.charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
 
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-slate-900 mb-0.5">
-                  {provider || description}
+                  {serviceName}
                 </h3>
-                <p className="text-sm text-slate-500">{description}</p>
+                <p className="text-sm text-slate-500">{provider}</p>
               </div>
             </div>
 
@@ -165,7 +168,7 @@ const Card = ({ subscription }) => {
                 : "Monthly Cost"}
             </p>
             <p className="text-2xl font-bold text-slate-900">
-              {formatCurrency(amount)}
+              {formatCurrency(costInDollar)}
             </p>
           </div>
 
@@ -237,54 +240,53 @@ const Card = ({ subscription }) => {
             </div>
           </div>
 
-          {/* Cancel Subscription Button - At Bottom */}
+          {/* Delete Subscription Button - At Bottom */}
           <button
-            onClick={() => setShowCancelModal(true)}
-            disabled={cancelLoading}
-            className="w-full mt-4 flex items-center justify-center space-x-2 bg-orange-50 hover:bg-orange-100 text-orange-600 hover:text-orange-700 py-2.5 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed border border-orange-200"
+            onClick={() => setShowDeleteModal(true)}
+            disabled={deleteLoading}
+            className="w-full mt-4 flex items-center justify-center space-x-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 py-2.5 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed border border-red-200"
           >
             <MdCancel size={18} />
-            <span>Cancel Subscription</span>
+            <span>Delete Subscription</span>
           </button>
         </div>
       </div>
 
-      {/* Cancel Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       <Modal
-        isOpen={showCancelModal}
-        onClose={() => setShowCancelModal(false)}
-        title="Cancel Subscription"
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete Subscription"
       >
         <div className="space-y-4">
           <p className="text-slate-700">
-            Are you sure you want to cancel renewal for{" "}
-            <strong>{provider || description}</strong>?
+            Are you sure you want to delete{" "}
+            <strong>{serviceName}</strong> from {provider}?
           </p>
           <p className="text-sm text-slate-600">
-            This subscription will remain active until the renewal date (
-            {formattedDate}). After that, it will not be renewed.
+            This will permanently remove this subscription from your tracking. This action cannot be undone.
           </p>
 
           <div className="flex space-x-3 pt-4">
             <button
-              onClick={() => setShowCancelModal(false)}
-              disabled={cancelLoading}
+              onClick={() => setShowDeleteModal(false)}
+              disabled={deleteLoading}
               className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors duration-200"
             >
-              Keep Subscription
+              Cancel
             </button>
             <button
-              onClick={handleCancelRenewal}
-              disabled={cancelLoading}
-              className="flex-1 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 flex items-center justify-center space-x-2"
+              onClick={handleDeleteSubscription}
+              disabled={deleteLoading}
+              className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 flex items-center justify-center space-x-2"
             >
-              {cancelLoading ? (
+              {deleteLoading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-orange-200 border-t-white rounded-full animate-spin"></div>
-                  <span>Canceling...</span>
+                  <div className="w-4 h-4 border-2 border-red-200 border-t-white rounded-full animate-spin"></div>
+                  <span>Deleting...</span>
                 </>
               ) : (
-                <span>Yes, Cancel Renewal</span>
+                <span>Yes, Delete</span>
               )}
             </button>
           </div>

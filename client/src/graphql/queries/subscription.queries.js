@@ -4,20 +4,16 @@ export const GET_SUBSCRIPTIONS = gql`
   query GetSubscriptions {
     subscriptions {
       _id
-      description
-      category
-      amount
+      serviceName
       provider
-      companyLogo
+      category
+      costInDollar
       billingCycle
-      nextBillingDate
       startDate
+      nextBillingDate
       paymentMethodId
-      status
       alertEnabled
-      alertSentForCurrentCycle
       createdAt
-      updatedAt
     }
   }
 `;
@@ -26,20 +22,16 @@ export const GET_SUBSCRIPTION = gql`
   query GetSubscription($id: ID!) {
     subscription(subscriptionId: $id) {
       _id
-      description
-      category
-      amount
+      serviceName
       provider
-      companyLogo
+      category
+      costInDollar
       billingCycle
-      nextBillingDate
       startDate
+      nextBillingDate
       paymentMethodId
-      status
       alertEnabled
-      alertSentForCurrentCycle
       createdAt
-      updatedAt
     }
   }
 `;

@@ -3,15 +3,13 @@ const transactionTypeDef = `#graphql
         _id: ID!
         userId: ID!
         subscriptionId: ID!
-        description: String!
-        paymentMethodId: String
+        serviceName: String!
+        provider: String!
         category: String!
-        amount: Float!
-        provider: String
-        companyLogo: String
+        costInDollar: Float!
         billingCycle: String!
         billingDate: String!
-        status: String!
+        paymentMethodId: String
         createdAt: String!
         updatedAt: String!
     }

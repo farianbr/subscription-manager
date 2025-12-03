@@ -2,6 +2,7 @@ import { useQuery } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
 import { GET_MONTHLY_HISTORY } from "../graphql/queries/transaction.queries";
 import { useCurrency } from "../context/CurrencyContext";
+import { getCompanyLogo } from "../lib/companyLogos";
 
 const HistoryPage = () => {
   const navigate = useNavigate();
@@ -102,16 +103,16 @@ const HistoryPage = () => {
                         {/* Transaction Info */}
                         <div className="flex items-center space-x-4 flex-1">
                           {/* Company Logo */}
-                          {transaction.companyLogo ? (
+                          {transaction.provider && getCompanyLogo(transaction.provider) ? (
                             <img 
-                              src={transaction.companyLogo} 
-                              alt={transaction.description}
+                              src={getCompanyLogo(transaction.provider)} 
+                              alt={transaction.serviceName}
                               className="w-10 h-10 rounded-lg object-contain bg-slate-100 p-1"
                             />
                           ) : (
                             <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
                               <span className="text-slate-400 text-lg font-bold">
-                                {transaction.description.charAt(0).toUpperCase()}
+                                {transaction.serviceName.charAt(0).toUpperCase()}
                               </span>
                             </div>
                           )}
@@ -119,19 +120,10 @@ const HistoryPage = () => {
                           {/* Details */}
                           <div className="flex-1">
                             <div className="flex items-center space-x-3 mb-1">
-                              <h3 className="font-semibold text-slate-900">{transaction.description}</h3>
+                              <h3 className="font-semibold text-slate-900">{transaction.serviceName}</h3>
                               <span className={`px-2 py-0.5 rounded text-xs font-medium ${categoryColors[transaction.category] || "bg-slate-100 text-slate-700"}`}>
                                 {transaction.category.charAt(0).toUpperCase() + transaction.category.slice(1)}
                               </span>
-                              {transaction.status && (
-                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                  transaction.status === "paid" ? "bg-green-100 text-green-700" :
-                                  transaction.status === "pending" ? "bg-yellow-100 text-yellow-700" :
-                                  "bg-red-100 text-red-700"
-                                }`}>
-                                  {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-                                </span>
-                              )}
                             </div>
                             <div className="flex items-center space-x-4 text-sm text-slate-600">
                               <span>
@@ -151,7 +143,7 @@ const HistoryPage = () => {
 
                         {/* Amount */}
                         <div className="text-right ml-4">
-                          <p className="text-lg font-bold text-slate-900">{formatCurrency(transaction.amount)}</p>
+                          <p className="text-lg font-bold text-slate-900">{formatCurrency(transaction.costInDollar)}</p>
                           {transaction.paymentMethodId && (
                             <p className="text-xs text-slate-500">Payment ID: {transaction.paymentMethodId.slice(0, 8)}...</p>
                           )}
@@ -167,17 +159,9 @@ const HistoryPage = () => {
                     <span className="text-slate-600">
                       {month.transactions.length} transaction{month.transactions.length !== 1 ? "s" : ""}
                     </span>
-                    <div className="flex items-center space-x-4">
-                      <span className="text-green-600">
-                        {month.transactions.filter(t => t.status === "paid").length} paid
-                      </span>
-                      <span className="text-yellow-600">
-                        {month.transactions.filter(t => t.status === "pending").length} pending
-                      </span>
-                      <span className="text-red-600">
-                        {month.transactions.filter(t => t.status === "failed").length} failed
-                      </span>
-                    </div>
+                    <span className="font-semibold text-slate-900">
+                      Total: {formatCurrency(month.transactions.reduce((sum, t) => sum + t.costInDollar, 0))}
+                    </span>
                   </div>
                 </div>
               </div>

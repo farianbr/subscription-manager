@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@apollo/client/react";
 import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { getCompanyOptions, getCompanyLogo } from "../lib/companyLogos";
+import { getCompanyOptions } from "../lib/companyLogos";
 
 const EditTransactionForm = ({ subscription, onSuccess, onCancel }) => {
   const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
@@ -14,12 +14,12 @@ const EditTransactionForm = ({ subscription, onSuccess, onCancel }) => {
   // Form state
   const [selectedCompany, setSelectedCompany] = useState("google");
   const [customCompanyName, setCustomCompanyName] = useState("");
-  const [serviceName, setServiceName] = useState("");
-  const [amount, setAmount] = useState("");
+  const [serviceNameInput, setServiceNameInput] = useState("");
+  const [costInDollar, setCostInDollar] = useState("");
   const [category, setCategory] = useState("entertainment");
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [paymentMethodId, setPaymentMethodId] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState("");
   const [alertEnabled, setAlertEnabled] = useState(false);
   const [initialized, setInitialized] = useState(false);
   
@@ -30,7 +30,7 @@ const EditTransactionForm = ({ subscription, onSuccess, onCancel }) => {
     if (subscription && !initialized) {
       // Find matching company or set to "other"
       const matchingCompany = companyOptions.find(
-        (opt) => opt.label.toLowerCase() === subscription.description?.toLowerCase()
+        (opt) => opt.value.toLowerCase() === subscription.provider?.toLowerCase()
       );
       
       if (matchingCompany) {
@@ -38,21 +38,21 @@ const EditTransactionForm = ({ subscription, onSuccess, onCancel }) => {
         setCustomCompanyName("");
       } else {
         setSelectedCompany("other");
-        setCustomCompanyName(subscription.description || "");
+        setCustomCompanyName(subscription.provider || "");
       }
 
       // Set other fields
-      setServiceName(subscription.provider || "");
-      setAmount(subscription.amount?.toString() || "");
+      setServiceNameInput(subscription.serviceName || "");
+      setCostInDollar(subscription.costInDollar?.toString() || "");
       setCategory(subscription.category || "entertainment");
       setBillingCycle(subscription.billingCycle || "monthly");
       setPaymentMethodId(subscription.paymentMethodId || "");
       setAlertEnabled(subscription.alertEnabled || false);
       
       // Format date for input field
-      if (subscription.nextBillingDate) {
-        const date = new Date(+subscription.nextBillingDate);
-        setEndDate(date.toISOString().split('T')[0]);
+      if (subscription.startDate) {
+        const date = new Date(subscription.startDate);
+        setStartDate(date.toISOString().split('T')[0]);
       }
       
       setInitialized(true);
@@ -62,18 +62,18 @@ const EditTransactionForm = ({ subscription, onSuccess, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Get company logo URL based on selection
-    const companyLogo = getCompanyLogo(selectedCompany);
+    // Get provider name
+    const provider = selectedCompany === "other" ? customCompanyName : selectedCompany;
+    const serviceName = serviceNameInput || provider;
     
     const subscriptionData = {
       subscriptionId: subscription._id,
-      description: selectedCompany === "other" ? customCompanyName : selectedCompany,
+      serviceName: serviceName,
+      provider: provider,
       category: category,
-      amount: parseFloat(amount),
-      provider: serviceName,
-      nextBillingDate: endDate,
+      costInDollar: parseFloat(costInDollar),
+      startDate: startDate,
       alertEnabled: alertEnabled,
-      companyLogo: companyLogo,
       billingCycle: billingCycle,
       paymentMethodId: paymentMethodId || null,
     };
@@ -150,8 +150,8 @@ const EditTransactionForm = ({ subscription, onSuccess, onCancel }) => {
             name="serviceName"
             type="text"
             placeholder="e.g., Premium, Pro, Business"
-            value={serviceName}
-            onChange={(e) => setServiceName(e.target.value)}
+            value={serviceNameInput}
+            onChange={(e) => setServiceNameInput(e.target.value)}
           />
         </div>
 
@@ -159,7 +159,7 @@ const EditTransactionForm = ({ subscription, onSuccess, onCancel }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="amount">
-              Amount
+              Cost ($)
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">$</span>
@@ -170,8 +170,8 @@ const EditTransactionForm = ({ subscription, onSuccess, onCancel }) => {
                 type="number"
                 step="0.01"
                 placeholder="9.99"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                value={costInDollar}
+                onChange={(e) => setCostInDollar(e.target.value)}
                 required
               />
             </div>
@@ -243,19 +243,19 @@ const EditTransactionForm = ({ subscription, onSuccess, onCancel }) => {
           </div>
         </div>
 
-        {/* Renewal Date */}
+        {/* Start Date */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="endDate">
-            Next Renewal Date
+          <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="startDate">
+            Start Date
           </label>
           <input
             type="date"
-            name="endDate"
-            id="endDate"
-            min={new Date().toISOString().split('T')[0]}
+            name="startDate"
+            id="startDate"
+            max={new Date().toISOString().split('T')[0]}
             className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
             required
           />
         </div>

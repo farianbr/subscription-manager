@@ -11,29 +11,22 @@ const transactionSchema = new mongoose.Schema({
     ref: "Subscription",
     required: true,
   },
-  description: {
+  serviceName: {
     type: String,
     required: true,
   },
-  paymentMethodId: {
+  provider: {
     type: String,
+    required: true,
   },
   category: {
     type: String,
     enum: ["entertainment", "productivity", "utilities", "education"],
     required: true,
   },
-  amount: {
+  costInDollar: {
     type: Number,
     required: true,
-  },
-  provider: {
-    type: String,
-    default: "Unknown",
-  },
-  companyLogo: {
-    type: String,
-    default: "",
   },
   billingCycle: {
     type: String,
@@ -44,10 +37,8 @@ const transactionSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
-  status: {
+  paymentMethodId: {
     type: String,
-    enum: ["paid", "pending", "failed"],
-    default: "paid",
   },
 }, { timestamps: true });
 

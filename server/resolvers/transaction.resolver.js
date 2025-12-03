@@ -25,7 +25,7 @@ const transactionResolver = {
           }
           
           historyMap[monthYear].transactions.push(transaction);
-          historyMap[monthYear].totalSpent += transaction.amount;
+          historyMap[monthYear].totalSpent += transaction.costInDollar;
         });
 
         return Object.values(historyMap).sort((a, b) => {

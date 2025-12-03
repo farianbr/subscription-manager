@@ -1,6 +1,27 @@
 import Subscription from "../models/subscription.model.js";
 import Transaction from "../models/transaction.model.js";
 
+// Helper function to calculate next billing date from start date
+function calculateNextBillingDate(startDate, billingCycle) {
+  const nextDate = new Date(startDate);
+  
+  switch (billingCycle) {
+    case "weekly":
+      nextDate.setDate(nextDate.getDate() + 7);
+      break;
+    case "monthly":
+      nextDate.setMonth(nextDate.getMonth() + 1);
+      break;
+    case "yearly":
+      nextDate.setFullYear(nextDate.getFullYear() + 1);
+      break;
+    default:
+      nextDate.setMonth(nextDate.getMonth() + 1);
+  }
+  
+  return nextDate;
+}
+
 const subscriptionResolver = {
   Query: {
     subscriptions: async (_, __, context) => {
@@ -8,10 +29,7 @@ const subscriptionResolver = {
         if (!context.getUser()) throw new Error("Unauthorized");
         const userId = await context.getUser()._id;
 
-        const subscriptions = await Subscription.find({ 
-          userId,
-          status: "active" 
-        }).sort({ createdAt: -1 });
+        const subscriptions = await Subscription.find({ userId }).sort({ createdAt: -1 });
         return subscriptions;
       } catch (err) {
         console.error("Error getting subscriptions:", err);
@@ -32,17 +50,14 @@ const subscriptionResolver = {
       if (!context.getUser()) throw new Error("Unauthorized");
 
       const userId = context.getUser()._id;
-      const subscriptions = await Subscription.find({ 
-        userId,
-        status: "active"
-      });
+      const subscriptions = await Subscription.find({ userId });
       const categoryMap = {};
 
       subscriptions.forEach((subscription) => {
         if (!categoryMap[subscription.category]) {
           categoryMap[subscription.category] = 0;
         }
-        categoryMap[subscription.category] += subscription.amount;
+        categoryMap[subscription.category] += subscription.costInDollar;
       });
 
       return Object.entries(categoryMap).map(([category, totalAmount]) => ({
@@ -56,11 +71,14 @@ const subscriptionResolver = {
       try {
         if (!context.getUser()) throw new Error("Unauthorized");
         
+        const startDate = new Date(input.startDate);
+        const nextBillingDate = calculateNextBillingDate(startDate, input.billingCycle);
+        
         const newSubscription = new Subscription({
           ...input,
           userId: context.getUser()._id,
-          startDate: input.startDate || new Date(),
-          status: "active",
+          startDate: startDate,
+          nextBillingDate: nextBillingDate,
           alertSentForCurrentCycle: false,
         });
         await newSubscription.save();
@@ -69,15 +87,13 @@ const subscriptionResolver = {
         const newTransaction = new Transaction({
           userId: context.getUser()._id,
           subscriptionId: newSubscription._id,
-          description: input.description,
-          category: input.category,
-          amount: input.amount,
+          serviceName: input.serviceName,
           provider: input.provider,
-          companyLogo: input.companyLogo,
+          category: input.category,
+          costInDollar: input.costInDollar,
           billingCycle: input.billingCycle,
-          billingDate: input.startDate || new Date(),
+          billingDate: startDate,
           paymentMethodId: input.paymentMethodId,
-          status: "paid",
         });
         await newTransaction.save();
         
@@ -90,6 +106,13 @@ const subscriptionResolver = {
     updateSubscription: async (_, { input }, context) => {
       try {
         if (!context.getUser()) throw new Error("Unauthorized");
+        
+        // If startDate is being updated, recalculate nextBillingDate
+        if (input.startDate) {
+          const subscription = await Subscription.findById(input.subscriptionId);
+          const billingCycle = input.billingCycle || subscription.billingCycle;
+          input.nextBillingDate = calculateNextBillingDate(new Date(input.startDate), billingCycle);
+        }
         
         const updatedSubscription = await Subscription.findByIdAndUpdate(
           input.subscriptionId,
@@ -117,57 +140,6 @@ const subscriptionResolver = {
       } catch (err) {
         console.error("Error deleting subscription:", err);
         throw new Error("Error deleting subscription");
-      }
-    },
-    cancelSubscription: async (_, { subscriptionId }, context) => {
-      try {
-        if (!context.getUser()) throw new Error("Unauthorized");
-        
-        const canceledSubscription = await Subscription.findByIdAndUpdate(
-          subscriptionId,
-          { 
-            status: "canceled",
-            canceledAt: new Date()
-          },
-          { new: true }
-        );
-        
-        return canceledSubscription;
-      } catch (err) {
-        console.error("Error canceling subscription:", err);
-        throw new Error("Error canceling subscription");
-      }
-    },
-    pauseSubscription: async (_, { subscriptionId }, context) => {
-      try {
-        if (!context.getUser()) throw new Error("Unauthorized");
-        
-        const pausedSubscription = await Subscription.findByIdAndUpdate(
-          subscriptionId,
-          { status: "paused" },
-          { new: true }
-        );
-        
-        return pausedSubscription;
-      } catch (err) {
-        console.error("Error pausing subscription:", err);
-        throw new Error("Error pausing subscription");
-      }
-    },
-    resumeSubscription: async (_, { subscriptionId }, context) => {
-      try {
-        if (!context.getUser()) throw new Error("Unauthorized");
-        
-        const resumedSubscription = await Subscription.findByIdAndUpdate(
-          subscriptionId,
-          { status: "active" },
-          { new: true }
-        );
-        
-        return resumedSubscription;
-      } catch (err) {
-        console.error("Error resuming subscription:", err);
-        throw new Error("Error resuming subscription");
       }
     },
   },

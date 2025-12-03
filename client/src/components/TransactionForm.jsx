@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@apollo/client/react";
 import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { getCompanyOptions, getCompanyLogo } from "../lib/companyLogos";
+import { getCompanyOptions } from "../lib/companyLogos";
 
 const TransactionForm = ({ onSuccess }) => {
   const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
@@ -21,22 +21,21 @@ const TransactionForm = ({ onSuccess }) => {
     const form = e.target;
     const formData = new FormData(form);
     
-    // Get company logo URL based on selection
+    // Get provider and service name
     const companyKey = formData.get("company");
-    const companyLogo = getCompanyLogo(companyKey);
+    const provider = companyKey === "other" ? formData.get("customName") : companyKey;
+    const serviceName = formData.get("serviceName") || provider;
     
-    // Get next billing date from form
-    const nextBillingDate = formData.get("endDate");
+    // Get start date from form
+    const startDate = formData.get("startDate");
     
     const subscriptionData = {
-      description: companyKey === "other" ? formData.get("customName") : formData.get("company"),
+      serviceName: serviceName,
+      provider: provider,
       category: formData.get("category"),
-      amount: parseFloat(formData.get("amount") || "0"),
-      provider: formData.get("serviceName") || "",
-      nextBillingDate: nextBillingDate,
-      startDate: new Date().toISOString(), // Current date as start date
+      costInDollar: parseFloat(formData.get("amount") || "0"),
+      startDate: startDate,
       alertEnabled: formData.get("alertEnabled") === "on",
-      companyLogo: companyLogo,
       billingCycle: formData.get("billingCycle") || "monthly",
       paymentMethodId: formData.get("paymentMethodId") || null,
     };
@@ -197,14 +196,15 @@ const TransactionForm = ({ onSuccess }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="endDate">
-              Next Renewal Date
+            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="startDate">
+              Start Date
             </label>
             <input
               type="date"
-              name="endDate"
-              id="endDate"
-              min={new Date().toISOString().split('T')[0]}
+              name="startDate"
+              id="startDate"
+              max={new Date().toISOString().split('T')[0]}
+              defaultValue={new Date().toISOString().split('T')[0]}
               className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               required
             />

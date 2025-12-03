@@ -28,7 +28,6 @@ export function scheduleDailyReminders() {
           nextBillingDate: { $gte: start, $lt: end },
           alertEnabled: true,
           alertSentForCurrentCycle: { $ne: true },
-          status: "active", // Only send reminders for active subscriptions
         }).lean();
 
         if (!subscriptions.length) return;
@@ -39,10 +38,10 @@ export function scheduleDailyReminders() {
 
           await sendMail({
             to: user.email,
-            subject: `Reminder: ${subscription.description} renews tomorrow`,
+            subject: `Reminder: ${subscription.serviceName} renews tomorrow`,
             text: `Hi ${user.name || "there"},
 
-Your ${subscription.description} subscription of $${subscription.amount} is due tomorrow.
+Your ${subscription.serviceName} subscription from ${subscription.provider} of $${subscription.costInDollar} is due tomorrow.
 
 ---
 You are receiving this email because you enabled alerts in Subscription Manager.
@@ -53,8 +52,8 @@ Subscription Manager • yourdomain.com
             html: `
     <div style="font-family: Arial, sans-serif; line-height:1.6; color:#333">
       <p>Hi ${user.name || "there"},</p>
-      <p>Your <strong>${subscription.description}</strong> subscription of <strong>$${
-              subscription.amount
+      <p>Your <strong>${subscription.serviceName}</strong> subscription from <strong>${subscription.provider}</strong> of <strong>$${
+              subscription.costInDollar
             }</strong> is due tomorrow.</p>
 
       <hr style="margin:20px 0; border:none; border-top:1px solid #ddd;" />

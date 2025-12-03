@@ -9,14 +9,12 @@ export const GET_MONTHLY_HISTORY = gql`
       transactions {
         _id
         subscriptionId
-        description
-        category
-        amount
+        serviceName
         provider
-        companyLogo
+        category
+        costInDollar
         billingCycle
         billingDate
-        status
         paymentMethodId
       }
     }

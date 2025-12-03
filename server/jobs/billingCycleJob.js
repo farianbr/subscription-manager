@@ -31,9 +31,8 @@ export const billingCycleJob = cron.schedule("0 0 * * *", async () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Find all active subscriptions where nextBillingDate is today or past
+    // Find all subscriptions where nextBillingDate is today or past
     const dueSubscriptions = await Subscription.find({
-      status: "active",
       nextBillingDate: { $lte: today }
     });
     
@@ -45,15 +44,13 @@ export const billingCycleJob = cron.schedule("0 0 * * *", async () => {
         const newTransaction = new Transaction({
           userId: subscription.userId,
           subscriptionId: subscription._id,
-          description: subscription.description,
-          category: subscription.category,
-          amount: subscription.amount,
+          serviceName: subscription.serviceName,
           provider: subscription.provider,
-          companyLogo: subscription.companyLogo,
+          category: subscription.category,
+          costInDollar: subscription.costInDollar,
           billingCycle: subscription.billingCycle,
           billingDate: subscription.nextBillingDate,
           paymentMethodId: subscription.paymentMethodId,
-          status: "paid",
         });
         
         await newTransaction.save();
@@ -68,7 +65,7 @@ export const billingCycleJob = cron.schedule("0 0 * * *", async () => {
         subscription.alertSentForCurrentCycle = false; // Reset alert flag for new cycle
         await subscription.save();
         
-        console.log(`Created transaction for subscription: ${subscription.description}`);
+        console.log(`Created transaction for subscription: ${subscription.serviceName}`);
       } catch (err) {
         console.error(`Error processing subscription ${subscription._id}:`, err);
       }

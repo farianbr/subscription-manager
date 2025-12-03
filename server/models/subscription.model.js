@@ -6,7 +6,11 @@ const subscriptionSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  description: {
+  serviceName: {
+    type: String,
+    required: true,
+  },
+  provider: {
     type: String,
     required: true,
   },
@@ -15,41 +19,25 @@ const subscriptionSchema = new mongoose.Schema({
     enum: ["entertainment", "productivity", "utilities", "education"],
     required: true,
   },
-  amount: {
+  costInDollar: {
     type: Number,
     required: true,
-  },
-  provider: {
-    type: String,
-    default: "Unknown",
-  },
-  companyLogo: {
-    type: String,
-    default: "",
   },
   billingCycle: {
     type: String,
     enum: ["monthly", "yearly", "weekly"],
     default: "monthly",
   },
-  nextBillingDate: {
+  startDate: {
     type: Date,
     required: true,
   },
-  startDate: {
+  nextBillingDate: {
     type: Date,
     required: true,
   },
   paymentMethodId: {
     type: String,
-  },
-  status: {
-    type: String,
-    enum: ["active", "paused", "canceled"],
-    default: "active",
-  },
-  canceledAt: {
-    type: Date,
   },
   alertEnabled: { 
     type: Boolean, 

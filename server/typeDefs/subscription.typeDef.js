@@ -2,17 +2,14 @@ const subscriptionTypeDef = `#graphql
     type Subscription {
         _id: ID!
         userId: ID!
-        description: String!
+        serviceName: String!
+        provider: String!
         category: String!
-        amount: Float!
-        provider: String
-        companyLogo: String
+        costInDollar: Float!
         billingCycle: String!
-        nextBillingDate: String!
         startDate: String!
+        nextBillingDate: String!
         paymentMethodId: String
-        status: String!
-        canceledAt: String
         alertEnabled: Boolean!
         alertSentForCurrentCycle: Boolean!
         createdAt: String!
@@ -34,19 +31,14 @@ const subscriptionTypeDef = `#graphql
         createSubscription(input: CreateSubscriptionInput!): Subscription!
         updateSubscription(input: UpdateSubscriptionInput!): Subscription!
         deleteSubscription(subscriptionId: ID!): Subscription!
-        cancelSubscription(subscriptionId: ID!): Subscription!
-        pauseSubscription(subscriptionId: ID!): Subscription!
-        resumeSubscription(subscriptionId: ID!): Subscription!
     }
 
     input CreateSubscriptionInput {
-        description: String!
+        serviceName: String!
+        provider: String!
         category: String!
-        amount: Float!
-        provider: String
-        companyLogo: String
+        costInDollar: Float!
         billingCycle: String!
-        nextBillingDate: String!
         startDate: String!
         paymentMethodId: String
         alertEnabled: Boolean
@@ -54,13 +46,12 @@ const subscriptionTypeDef = `#graphql
 
     input UpdateSubscriptionInput {
         subscriptionId: ID!
-        description: String
-        category: String
-        amount: Float
+        serviceName: String
         provider: String
-        companyLogo: String
+        category: String
+        costInDollar: Float
         billingCycle: String
-        nextBillingDate: String
+        startDate: String
         paymentMethodId: String
         alertEnabled: Boolean
     }

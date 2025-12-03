@@ -1,10 +1,10 @@
 import { useQuery } from "@apollo/client/react";
 import Card from "./Card";
-import { GET_TRANSACTIONS } from "../graphql/queries/transaction.queries";
+import { GET_SUBSCRIPTIONS } from "../graphql/queries/subscription.queries";
 import CardsSkeletonList from "./CardsSkeletonList";
 
 const Cards = ({ onAddNew }) => {
-  const { data, loading, error } = useQuery(GET_TRANSACTIONS);
+  const { data, loading, error } = useQuery(GET_SUBSCRIPTIONS);
 
   if (error) return <p>Error: {error.message}</p>;
 
@@ -13,9 +13,9 @@ const Cards = ({ onAddNew }) => {
       <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 justify-start">
         {loading ? (
           <CardsSkeletonList count={6} />
-        ) : data?.transactions.length > 0 ? (
-          data.transactions.map((txn) => (
-            <Card key={txn._id} transaction={txn} />
+        ) : data?.subscriptions && data.subscriptions.length > 0 ? (
+          data.subscriptions.map((subscription) => (
+            <Card key={subscription._id} subscription={subscription} />
           ))
         ) : (
           <div className="col-span-full flex flex-col items-center justify-center py-12">

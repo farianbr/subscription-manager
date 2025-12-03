@@ -1,23 +1,17 @@
-import {
-  MdBusiness,
-  MdOutlineAccessTime,
-  MdOutlinePayments,
-} from "react-icons/md";
-import { FaSackDollar } from "react-icons/fa6";
-import { FaBuilding } from "react-icons/fa";
 import { HiPencilAlt } from "react-icons/hi";
 import { MdCancel } from "react-icons/md";
-import { Link } from "react-router-dom";
 import { formatDate } from "../lib/utils";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import {
   CANCEL_SUBSCRIPTION,
-  UPDATE_TRANSACTION,
-} from "../graphql/mutations/transaction.mutation";
+  UPDATE_SUBSCRIPTION,
+} from "../graphql/mutations/subscription.mutation";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
 import Modal from "./ui/Modal";
+import { useCurrency } from "../context/CurrencyContext";
+import EditTransactionForm from "./EditTransactionForm";
 
 const categoryColorMap = {
   Productivity: "bg-emerald-50 border-emerald-200",
@@ -33,33 +27,38 @@ const categoryIconColor = {
   Education: "text-amber-600",
 };
 
-const Card = ({ transaction }) => {
+const Card = ({ subscription }) => {
   let {
     _id,
     category,
     amount,
     provider,
-    endDate,
+    nextBillingDate,
     description,
     alertEnabled,
     companyLogo,
     billingCycle,
-    renewalDate,
     paymentMethodId,
-  } = transaction;
+  } = subscription;
 
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
+  const { formatCurrency } = useCurrency();
 
   const [cancelSubscription, { loading: cancelLoading }] = useMutation(
     CANCEL_SUBSCRIPTION,
     {
-      refetchQueries: ["GetTransactions", "GetTransactionStatistics"],
+      refetchQueries: ["GetSubscriptions", "GetSubscriptionStatistics"],
     }
   );
 
-  const [updateTransaction, { loading: updateLoading }] =
-    useMutation(UPDATE_TRANSACTION);
+  const [updateSubscription, { loading: updateLoading }] = useMutation(
+    UPDATE_SUBSCRIPTION,
+    {
+      refetchQueries: ["GetSubscriptions"],
+    }
+  );
 
   // Get payment method name
   const paymentMethodName =
@@ -70,9 +69,8 @@ const Card = ({ transaction }) => {
   description = description[0]?.toUpperCase() + description.slice(1);
   category = category[0]?.toUpperCase() + category.slice(1);
 
-  // Use renewalDate if available, otherwise fall back to endDate
-  const displayDate = renewalDate || endDate;
-  const formattedDate = formatDate(displayDate);
+  // Use nextBillingDate for display
+  const formattedDate = formatDate(nextBillingDate);
 
   const cardClass = categoryColorMap[category];
   const iconColor = categoryIconColor[category];
@@ -81,10 +79,10 @@ const Card = ({ transaction }) => {
     try {
       await cancelSubscription({
         variables: {
-          transactionId: _id,
+          subscriptionId: _id,
         },
       });
-      toast.success("Subscription renewal canceled successfully");
+      toast.success("Subscription canceled successfully");
       setShowCancelModal(false);
     } catch (err) {
       console.error(err);
@@ -94,10 +92,10 @@ const Card = ({ transaction }) => {
 
   const handleToggle = async () => {
     try {
-      await updateTransaction({
+      await updateSubscription({
         variables: {
           input: {
-            transactionId: _id,
+            subscriptionId: _id,
             alertEnabled: !alertEnabled, // flip value
           },
         },
@@ -144,17 +142,16 @@ const Card = ({ transaction }) => {
             </div>
 
             <div className="flex items-center space-x-2 ml-2">
-              <Link to={`/transaction/${_id}`}>
-                <button
-                  className="p-1.5 hover:bg-blue-50 rounded transition-colors duration-200"
-                  title="Edit subscription"
-                >
-                  <HiPencilAlt
-                    className="text-blue-500 hover:text-blue-600"
-                    size={16}
-                  />
-                </button>
-              </Link>
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="p-1.5 hover:bg-blue-50 rounded transition-colors duration-200"
+                title="Edit subscription"
+              >
+                <HiPencilAlt
+                  className="text-blue-500 hover:text-blue-600"
+                  size={16}
+                />
+              </button>
             </div>
           </div>
 
@@ -168,7 +165,7 @@ const Card = ({ transaction }) => {
                 : "Monthly Cost"}
             </p>
             <p className="text-2xl font-bold text-slate-900">
-              ${amount.toFixed(2)}
+              {formatCurrency(amount)}
             </p>
           </div>
 
@@ -291,6 +288,18 @@ const Card = ({ transaction }) => {
               )}
             </button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Edit Subscription Modal */}
+      <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)}>
+        <div className="p-6">
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">Edit Subscription</h2>
+          <EditTransactionForm 
+            subscription={subscription}
+            onSuccess={() => setShowEditModal(false)}
+            onCancel={() => setShowEditModal(false)}
+          />
         </div>
       </Modal>
     </>

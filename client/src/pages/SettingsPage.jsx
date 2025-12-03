@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
 import { 
   UPDATE_PROFILE, 
@@ -10,28 +10,24 @@ import {
   SET_DEFAULT_PAYMENT_METHOD 
 } from "../graphql/mutations/user.mutation";
 import toast from "react-hot-toast";
+import { useCurrency } from "../context/CurrencyContext";
+import Modal from "../components/ui/Modal";
 
 const SettingsPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { data: userData, loading: userLoading } = useQuery(GET_AUTHENTICATED_USER);
+  const { setCurrency: setGlobalCurrency } = useCurrency();
   
-  const [updateProfile, { loading: profileLoading }] = useMutation(UPDATE_PROFILE, {
-    refetchQueries: ["GET_AUTHENTICATED_USER"],
-  });
+  const [updateProfile, { loading: profileLoading }] = useMutation(UPDATE_PROFILE);
   
   const [updatePassword, { loading: passwordLoading }] = useMutation(UPDATE_PASSWORD);
   
-  const [addPaymentMethod, { loading: addingPayment }] = useMutation(ADD_PAYMENT_METHOD, {
-    refetchQueries: ["GET_AUTHENTICATED_USER"],
-  });
+  const [addPaymentMethod, { loading: addingPayment }] = useMutation(ADD_PAYMENT_METHOD);
   
-  const [removePaymentMethod] = useMutation(REMOVE_PAYMENT_METHOD, {
-    refetchQueries: ["GET_AUTHENTICATED_USER"],
-  });
+  const [removePaymentMethod] = useMutation(REMOVE_PAYMENT_METHOD);
   
-  const [setDefaultPaymentMethod] = useMutation(SET_DEFAULT_PAYMENT_METHOD, {
-    refetchQueries: ["GET_AUTHENTICATED_USER"],
-  });
+  const [setDefaultPaymentMethod] = useMutation(SET_DEFAULT_PAYMENT_METHOD);
 
   const [profileData, setProfileData] = useState({
     name: "",
@@ -53,6 +49,10 @@ const SettingsPage = () => {
   });
 
   const [activeTab, setActiveTab] = useState("profile");
+  const [settingDefaultId, setSettingDefaultId] = useState(null);
+  const [deletingPaymentId, setDeletingPaymentId] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState(null);
 
   // Initialize form with user data
   useEffect(() => {
@@ -65,12 +65,30 @@ const SettingsPage = () => {
     }
   }, [userData]);
 
+  // Check for tab parameter in URL
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && ["profile", "security", "payment"].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     try {
       await updateProfile({
         variables: { input: profileData },
+        update: (cache, { data: updatedData }) => {
+          if (updatedData?.updateProfile) {
+            cache.writeQuery({
+              query: GET_AUTHENTICATED_USER,
+              data: { authUser: updatedData.updateProfile },
+            });
+          }
+        },
       });
+      // Update global currency context immediately
+      setGlobalCurrency(profileData.currency);
       toast.success("Profile updated successfully");
     } catch (err) {
       toast.error(err.message);
@@ -115,6 +133,14 @@ const SettingsPage = () => {
     try {
       await addPaymentMethod({
         variables: { input: paymentData },
+        update: (cache, { data: mutationData }) => {
+          if (mutationData?.addPaymentMethod) {
+            cache.writeQuery({
+              query: GET_AUTHENTICATED_USER,
+              data: { authUser: mutationData.addPaymentMethod },
+            });
+          }
+        },
       });
       toast.success("Payment method added");
       setPaymentData({
@@ -129,26 +155,55 @@ const SettingsPage = () => {
   };
 
   const handleRemovePayment = async (paymentMethodId) => {
-    if (!window.confirm("Are you sure you want to remove this payment method?")) return;
+    setPaymentToDelete(paymentMethodId);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDeletePayment = async () => {
+    if (!paymentToDelete) return;
     
     try {
+      setDeletingPaymentId(paymentToDelete);
       await removePaymentMethod({
-        variables: { paymentMethodId },
+        variables: { paymentMethodId: paymentToDelete },
+        update: (cache, { data: mutationData }) => {
+          if (mutationData?.removePaymentMethod) {
+            cache.writeQuery({
+              query: GET_AUTHENTICATED_USER,
+              data: { authUser: mutationData.removePaymentMethod },
+            });
+          }
+        },
       });
       toast.success("Payment method removed");
+      setDeleteModalOpen(false);
+      setPaymentToDelete(null);
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setDeletingPaymentId(null);
     }
   };
 
   const handleSetDefault = async (paymentMethodId) => {
     try {
+      setSettingDefaultId(paymentMethodId);
       await setDefaultPaymentMethod({
         variables: { paymentMethodId },
+        update: (cache, { data: mutationData }) => {
+          if (mutationData?.setDefaultPaymentMethod) {
+            cache.writeQuery({
+              query: GET_AUTHENTICATED_USER,
+              data: { authUser: mutationData.setDefaultPaymentMethod },
+            });
+          }
+        },
       });
       toast.success("Default payment method updated");
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setSettingDefaultId(null);
     }
   };
 
@@ -161,7 +216,7 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-8 pt-24">
+    <div className="min-h-screen bg-slate-50 pb-8 pt-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         
         {/* Back Button */}
@@ -366,18 +421,31 @@ const SettingsPage = () => {
                             {!method.isDefault && (
                               <button
                                 onClick={() => handleSetDefault(method.id)}
-                                className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                disabled={settingDefaultId === method.id}
+                                className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
                               >
-                                Set Default
+                                {settingDefaultId === method.id ? (
+                                  <>
+                                    <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                    <span>Setting...</span>
+                                  </>
+                                ) : (
+                                  <span>Set Default</span>
+                                )}
                               </button>
                             )}
                             <button
                               onClick={() => handleRemovePayment(method.id)}
-                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                              disabled={deletingPaymentId === method.id}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
+                              {deletingPaymentId === method.id ? (
+                                <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              )}
                             </button>
                           </div>
                         </div>
@@ -465,6 +533,39 @@ const SettingsPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)}>
+        <div className="p-6">
+          <h2 className="text-xl font-bold text-slate-900 mb-4">Delete Payment Method</h2>
+          <p className="text-slate-600 mb-6">
+            Are you sure you want to remove this payment method? This action cannot be undone.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setDeleteModalOpen(false)}
+              disabled={deletingPaymentId !== null}
+              className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDeletePayment}
+              disabled={deletingPaymentId !== null}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center space-x-2"
+            >
+              {deletingPaymentId !== null ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Deleting...</span>
+                </>
+              ) : (
+                <span>Delete</span>
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

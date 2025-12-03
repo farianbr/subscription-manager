@@ -2,7 +2,6 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
-import TransactionPage from "./pages/TransactionPage";
 import SettingsPage from "./pages/SettingsPage";
 import HistoryPage from "./pages/HistoryPage";
 import NotFound from "./pages/NotFound";
@@ -46,12 +45,6 @@ function App() {
           element={!data.authUser ? <SignUpPage /> : <Navigate to="/" />}
         />
         <Route
-          path="/transaction/:id"
-          element={
-            data.authUser ? <TransactionPage /> : <Navigate to="/login" />
-          }
-        />
-        <Route
           path="/settings"
           element={
             data.authUser ? <SettingsPage /> : <Navigate to="/login" />
@@ -63,7 +56,7 @@ function App() {
             data.authUser ? <HistoryPage /> : <Navigate to="/login" />
           }
         />
-        <Route path="*" element={<NotFound />} />{" "}
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
     </>

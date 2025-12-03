@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import Transaction from "../models/transaction.model.js";
+import Subscription from "../models/subscription.model.js";
 import User from "../models/user.model.js";
 import { sendMail } from "../utils/mailer.js";
 
@@ -23,24 +23,26 @@ export function scheduleDailyReminders() {
       try {
         const { start, end } = getTomorrowBounds();
 
-        const txns = await Transaction.find({
-          endDate: { $gte: start, $lt: end },
+        // Find active subscriptions with nextBillingDate tomorrow and alerts enabled
+        const subscriptions = await Subscription.find({
+          nextBillingDate: { $gte: start, $lt: end },
           alertEnabled: true,
-          alertSentForDateMinus1: { $ne: true },
+          alertSentForCurrentCycle: { $ne: true },
+          status: "active", // Only send reminders for active subscriptions
         }).lean();
 
-        if (!txns.length) return;
+        if (!subscriptions.length) return;
 
-        for (const txn of txns) {
-          const user = await User.findById(txn.userId).lean();
+        for (const subscription of subscriptions) {
+          const user = await User.findById(subscription.userId).lean();
           if (!user?.email) continue;
 
           await sendMail({
             to: user.email,
-            subject: `Reminder: ${txn.description} renews tomorrow`,
+            subject: `Reminder: ${subscription.description} renews tomorrow`,
             text: `Hi ${user.name || "there"},
 
-Your ${txn.description} of $${txn.amount} is due tomorrow.
+Your ${subscription.description} subscription of $${subscription.amount} is due tomorrow.
 
 ---
 You are receiving this email because you enabled alerts in Subscription Manager.
@@ -51,8 +53,8 @@ Subscription Manager • yourdomain.com
             html: `
     <div style="font-family: Arial, sans-serif; line-height:1.6; color:#333">
       <p>Hi ${user.name || "there"},</p>
-      <p>Your <strong>${txn.description}</strong> of <strong>$${
-              txn.amount
+      <p>Your <strong>${subscription.description}</strong> subscription of <strong>$${
+              subscription.amount
             }</strong> is due tomorrow.</p>
 
       <hr style="margin:20px 0; border:none; border-top:1px solid #ddd;" />
@@ -67,9 +69,10 @@ Subscription Manager • yourdomain.com
           });
         }
 
-        await Transaction.updateMany(
-          { _id: { $in: txns.map((t) => t._id) } },
-          { $set: { alertSentForDateMinus1: true } }
+        // Mark that alert has been sent for this billing cycle
+        await Subscription.updateMany(
+          { _id: { $in: subscriptions.map((s) => s._id) } },
+          { $set: { alertSentForCurrentCycle: true } }
         );
       } catch (err) {
         console.error("Reminder job error:", err);

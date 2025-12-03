@@ -7,16 +7,20 @@ import TransactionForm from "../components/TransactionForm";
 import Modal from "../components/ui/Modal";
 
 import { useQuery } from "@apollo/client/react";
-import { GET_TRANSACTION_STATISTICS, GET_TRANSACTIONS, GET_MONTHLY_HISTORY } from "../graphql/queries/transaction.queries";
+import { GET_SUBSCRIPTION_STATISTICS } from "../graphql/queries/subscription.queries";
+import { GET_SUBSCRIPTIONS } from "../graphql/queries/subscription.queries";
+import { GET_MONTHLY_HISTORY } from "../graphql/queries/transaction.queries";
 import { useEffect, useState } from "react";
+import { useCurrency } from "../context/CurrencyContext";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const HomePage = () => {
-  const { data } = useQuery(GET_TRANSACTION_STATISTICS);
-  const { data: transactionData } = useQuery(GET_TRANSACTIONS);
+  const { data } = useQuery(GET_SUBSCRIPTION_STATISTICS);
+  const { data: subscriptionData } = useQuery(GET_SUBSCRIPTIONS);
   const { data: historyData } = useQuery(GET_MONTHLY_HISTORY);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { formatCurrency, convertFromUSD, getCurrencySymbol } = useCurrency();
 
   const [chartData, setChartData] = useState({
     labels: [],
@@ -34,26 +38,18 @@ const HomePage = () => {
     ],
   });
 
-  // ✅ Chart.js plugin for center text - removed for better UI
-  const centerTextPlugin = {
-    id: "centerText",
-    afterDraw: () => {
-      // No center text - total amount moved to category breakdown
-    },
-  };
-
   useEffect(() => {
-    if (data?.categoryStatistics) {
-      const categories = data.categoryStatistics.map((stat) => 
+    if (data?.subscriptionStatistics) {
+      const categories = data.subscriptionStatistics.map((stat) => 
         stat.category.charAt(0).toUpperCase() + stat.category.slice(1)
       );
-      const totalAmounts = data.categoryStatistics.map(
-        (stat) => stat.totalAmount
+      const totalAmounts = data.subscriptionStatistics.map(
+        (stat) => convertFromUSD(stat.totalAmount)
       );
       const backgroundColors = [];
       const borderColors = [];
 
-      data.categoryStatistics.forEach((stat) => {
+      data.subscriptionStatistics.forEach((stat) => {
         const category = stat.category.toLowerCase();
         if (category === "productivity") {
           backgroundColors.push("rgba(75, 192, 192)");
@@ -82,7 +78,7 @@ const HomePage = () => {
         ],
       }));
     }
-  }, [data]);
+  }, [data, convertFromUSD]);
 
   const getCurrentMonthSpending = () => {
     if (!historyData?.monthlyHistory) return 0;
@@ -168,7 +164,7 @@ const HomePage = () => {
                 </div>
               </div>
               <p className="text-3xl font-bold text-slate-900">
-                {transactionData?.transactions?.length || 0}
+                {subscriptionData?.subscriptions?.length || 0}
               </p>
               <p className="text-sm text-slate-500 mt-1">Active services</p>
             </div>
@@ -183,7 +179,7 @@ const HomePage = () => {
                 </div>
               </div>
               <p className="text-3xl font-bold text-slate-900">
-                ${data?.categoryStatistics ? data.categoryStatistics.reduce((total, stat) => total + stat.totalAmount, 0).toFixed(2) : '0.00'}
+                {formatCurrency(data?.subscriptionStatistics ? data.subscriptionStatistics.reduce((total, stat) => total + stat.totalAmount, 0) : 0)}
               </p>
               <p className="text-sm text-slate-500 mt-1">All categories</p>
             </div>
@@ -198,7 +194,7 @@ const HomePage = () => {
                 </div>
               </div>
               <p className="text-3xl font-bold text-slate-900">
-                ${getCurrentMonthSpending().toFixed(2)}
+                {formatCurrency(getCurrentMonthSpending())}
               </p>
               <p className="text-sm text-slate-500 mt-1">Current spending</p>
             </div>
@@ -213,14 +209,14 @@ const HomePage = () => {
                 </div>
               </div>
               <p className="text-3xl font-bold text-slate-900">
-                ${getLastMonthSpending().toFixed(2)}
+                {formatCurrency(getLastMonthSpending())}
               </p>
               <p className="text-sm text-slate-500 mt-1">Previous spending</p>
             </div>
           </div>
 
           {/* Spending Overview Chart */}
-          {data?.categoryStatistics.length > 0 && (
+          {data?.subscriptionStatistics && data.subscriptionStatistics.length > 0 && (
             <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 mb-8">
               <h2 className="text-xl font-bold text-slate-900 mb-6">Spending by Category</h2>
               
@@ -229,7 +225,6 @@ const HomePage = () => {
                 <div className="h-80 flex items-center justify-center">
                   <Doughnut
                     data={chartData}
-                    plugins={[centerTextPlugin]}
                     options={{
                       plugins: {
                         legend: {
@@ -245,6 +240,15 @@ const HomePage = () => {
                             pointStyle: 'circle',
                           },
                         },
+                        tooltip: {
+                          callbacks: {
+                            label: (context) => {
+                              const label = context.label || '';
+                              const value = context.parsed || 0;
+                              return `${label}: ${getCurrencySymbol()}${value.toFixed(2)}`;
+                            }
+                          }
+                        }
                       },
                       maintainAspectRatio: false,
                     }}
@@ -253,8 +257,8 @@ const HomePage = () => {
                 
                 {/* Category List */}
                 <div className="space-y-3">
-                  {data.categoryStatistics.map((stat, index) => {
-                    const percentage = ((stat.totalAmount / data.categoryStatistics.reduce((t, s) => t + s.totalAmount, 0)) * 100).toFixed(1);
+                  {data.subscriptionStatistics.map((stat, index) => {
+                    const percentage = ((stat.totalAmount / data.subscriptionStatistics.reduce((t, s) => t + s.totalAmount, 0)) * 100).toFixed(1);
                     return (
                       <div key={stat.category} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
                         <div className="flex items-center space-x-3">
@@ -265,7 +269,7 @@ const HomePage = () => {
                           <span className="capitalize text-slate-700 font-medium">{stat.category}</span>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-slate-900">${stat.totalAmount.toFixed(2)}</p>
+                          <p className="font-bold text-slate-900">{formatCurrency(stat.totalAmount)}</p>
                           <p className="text-sm text-slate-500">{percentage}%</p>
                         </div>
                       </div>

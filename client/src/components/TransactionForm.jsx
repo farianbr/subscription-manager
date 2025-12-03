@@ -1,4 +1,4 @@
-import { CREATE_TRANSACTION } from "../graphql/mutations/transaction.mutation";
+import { CREATE_SUBSCRIPTION } from "../graphql/mutations/subscription.mutation";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
 import { useState } from "react";
@@ -7,8 +7,8 @@ import { getCompanyOptions, getCompanyLogo } from "../lib/companyLogos";
 
 const TransactionForm = ({ onSuccess }) => {
   const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
-  const [createTransaction, { loading }] = useMutation(CREATE_TRANSACTION, {
-    refetchQueries: ["GetTransactions", "GetTransactionStatistics"],
+  const [createSubscription, { loading }] = useMutation(CREATE_SUBSCRIPTION, {
+    refetchQueries: ["GetSubscriptions", "GetSubscriptionStatistics"],
   });
 
   const [selectedCompany, setSelectedCompany] = useState("google");
@@ -25,17 +25,16 @@ const TransactionForm = ({ onSuccess }) => {
     const companyKey = formData.get("company");
     const companyLogo = getCompanyLogo(companyKey);
     
-    // Calculate renewalDate from endDate
-    const endDateValue = formData.get("endDate");
+    // Get next billing date from form
+    const nextBillingDate = formData.get("endDate");
     
-    const transactionData = {
+    const subscriptionData = {
       description: companyKey === "other" ? formData.get("customName") : formData.get("company"),
-      paymentType: "card", // Default value since we removed the field
       category: formData.get("category"),
       amount: parseFloat(formData.get("amount") || "0"),
       provider: formData.get("serviceName") || "",
-      endDate: endDateValue,
-      renewalDate: endDateValue, // Set renewalDate same as endDate initially
+      nextBillingDate: nextBillingDate,
+      startDate: new Date().toISOString(), // Current date as start date
       alertEnabled: formData.get("alertEnabled") === "on",
       companyLogo: companyLogo,
       billingCycle: formData.get("billingCycle") || "monthly",
@@ -43,7 +42,7 @@ const TransactionForm = ({ onSuccess }) => {
     };
     
     try {
-      await createTransaction({ variables: { input: transactionData } });
+      await createSubscription({ variables: { input: subscriptionData } });
 
       form.reset();
       setSelectedCompany("google");
@@ -192,7 +191,7 @@ const TransactionForm = ({ onSuccess }) => {
             </select>
             {(!userData?.authUser?.paymentMethods || userData.authUser.paymentMethods.length === 0) && (
               <p className="text-xs text-slate-500 mt-1">
-                Add payment methods in <a href="/settings" className="text-blue-600 hover:underline">Settings</a>
+                Add payment methods in <a href="/settings?tab=payment" className="text-blue-600 hover:underline">Settings</a>
               </p>
             )}
           </div>

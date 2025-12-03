@@ -1,22 +1,17 @@
 import { useQuery } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
 import { GET_MONTHLY_HISTORY } from "../graphql/queries/transaction.queries";
+import { useCurrency } from "../context/CurrencyContext";
 
 const HistoryPage = () => {
   const navigate = useNavigate();
   const { data, loading, error } = useQuery(GET_MONTHLY_HISTORY);
+  const { formatCurrency } = useCurrency();
 
   const categoryColors = {
     saving: "bg-emerald-100 text-emerald-700",
     expense: "bg-pink-100 text-pink-700",
     investment: "bg-blue-100 text-blue-700",
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
   };
 
   const getMonthName = (month) => {
@@ -49,7 +44,7 @@ const HistoryPage = () => {
   const monthlyHistory = data?.monthlyHistory || [];
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-8 pt-24">
+    <div className="min-h-screen bg-slate-50 pb-8 pt-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         
         {/* Back Button */}
@@ -128,9 +123,13 @@ const HistoryPage = () => {
                               <span className={`px-2 py-0.5 rounded text-xs font-medium ${categoryColors[transaction.category] || "bg-slate-100 text-slate-700"}`}>
                                 {transaction.category.charAt(0).toUpperCase() + transaction.category.slice(1)}
                               </span>
-                              {transaction.status === "canceled" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
-                                  Canceled
+                              {transaction.status && (
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                  transaction.status === "paid" ? "bg-green-100 text-green-700" :
+                                  transaction.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                                  "bg-red-100 text-red-700"
+                                }`}>
+                                  {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
                                 </span>
                               )}
                             </div>
@@ -139,11 +138,11 @@ const HistoryPage = () => {
                                 <span className="text-slate-500">Billing:</span> {transaction.billingCycle || "monthly"}
                               </span>
                               <span>
-                                <span className="text-slate-500">Date:</span> {new Date(parseInt(transaction.createdAt)).toLocaleDateString()}
+                                <span className="text-slate-500">Date:</span> {new Date(parseInt(transaction.billingDate)).toLocaleDateString()}
                               </span>
-                              {transaction.canceledAt && (
-                                <span className="text-red-600">
-                                  <span className="text-slate-500">Canceled:</span> {new Date(parseInt(transaction.canceledAt)).toLocaleDateString()}
+                              {transaction.provider && (
+                                <span>
+                                  <span className="text-slate-500">Provider:</span> {transaction.provider}
                                 </span>
                               )}
                             </div>
@@ -166,11 +165,19 @@ const HistoryPage = () => {
                 <div className="bg-slate-50 px-6 py-3 border-t border-slate-200">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-600">
-                      {month.transactions.length} subscription{month.transactions.length !== 1 ? "s" : ""}
+                      {month.transactions.length} transaction{month.transactions.length !== 1 ? "s" : ""}
                     </span>
-                    <span className="text-slate-600">
-                      {month.transactions.filter(t => t.status === "canceled").length} canceled
-                    </span>
+                    <div className="flex items-center space-x-4">
+                      <span className="text-green-600">
+                        {month.transactions.filter(t => t.status === "paid").length} paid
+                      </span>
+                      <span className="text-yellow-600">
+                        {month.transactions.filter(t => t.status === "pending").length} pending
+                      </span>
+                      <span className="text-red-600">
+                        {month.transactions.filter(t => t.status === "failed").length} failed
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

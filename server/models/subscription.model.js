@@ -1,22 +1,14 @@
 import mongoose from "mongoose";
 
-const transactionSchema = new mongoose.Schema({
+const subscriptionSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
-  subscriptionId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Subscription",
-    required: true,
-  },
   description: {
     type: String,
     required: true,
-  },
-  paymentMethodId: {
-    type: String,
   },
   category: {
     type: String,
@@ -40,17 +32,35 @@ const transactionSchema = new mongoose.Schema({
     enum: ["monthly", "yearly", "weekly"],
     default: "monthly",
   },
-  billingDate: {
+  nextBillingDate: {
     type: Date,
     required: true,
   },
+  startDate: {
+    type: Date,
+    required: true,
+  },
+  paymentMethodId: {
+    type: String,
+  },
   status: {
     type: String,
-    enum: ["paid", "pending", "failed"],
-    default: "paid",
+    enum: ["active", "paused", "canceled"],
+    default: "active",
+  },
+  canceledAt: {
+    type: Date,
+  },
+  alertEnabled: { 
+    type: Boolean, 
+    default: false 
+  },
+  alertSentForCurrentCycle: { 
+    type: Boolean, 
+    default: false 
   },
 }, { timestamps: true });
 
-const Transaction = mongoose.model("Transaction", transactionSchema);
+const Subscription = mongoose.model("Subscription", subscriptionSchema);
 
-export default Transaction;
+export default Subscription;

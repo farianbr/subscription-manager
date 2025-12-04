@@ -8,7 +8,7 @@ import { getCompanyOptions } from "../lib/companyLogos";
 const TransactionForm = ({ onSuccess }) => {
   const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
   const [createSubscription, { loading }] = useMutation(CREATE_SUBSCRIPTION, {
-    refetchQueries: ["GetSubscriptions", "GetSubscriptionStatistics"],
+    refetchQueries: ["GetSubscriptions"],
   });
 
   const [selectedCompany, setSelectedCompany] = useState("google");
@@ -184,7 +184,7 @@ const TransactionForm = ({ onSuccess }) => {
               <option value="">Select Payment Method</option>
               {userData?.authUser?.paymentMethods?.map((method) => (
                 <option key={method.id} value={method.id}>
-                  {method.name} {method.last4 && `(•••• ${method.last4})`} {method.isDefault && "- Default"}
+                  {method.name} {method.last4 && `(•••• ${method.last4})${method.isDefault ? "*" : ""}`} 
                 </option>
               ))}
             </select>

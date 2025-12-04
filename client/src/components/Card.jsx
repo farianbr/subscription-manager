@@ -49,7 +49,7 @@ const Card = ({ subscription }) => {
   const [deleteSubscription, { loading: deleteLoading }] = useMutation(
     DELETE_SUBSCRIPTION,
     {
-      refetchQueries: ["GetSubscriptions", "GetSubscriptionStatistics"],
+      refetchQueries: ["GetSubscriptions"],
     }
   );
 
@@ -66,11 +66,10 @@ const Card = ({ subscription }) => {
       (method) => method.id === paymentMethodId
     )?.name || "Unknown";
 
-  // Get company logo dynamically
-  const companyLogo = getCompanyLogo(provider);
-
   serviceName = serviceName[0]?.toUpperCase() + serviceName.slice(1);
   category = category[0]?.toUpperCase() + category.slice(1);
+  
+  const companyLogo = getCompanyLogo(provider);
 
   // Use nextBillingDate for display
   const formattedDate = formatDate(nextBillingDate);

@@ -37,35 +37,6 @@ const subscriptionResolver = {
         throw new Error("Error getting subscriptions");
       }
     },
-    subscription: async (_, { subscriptionId }, context) => {
-      try {
-        if (!context.getUser()) throw new Error("Unauthorized");
-        const subscription = await Subscription.findById(subscriptionId);
-        return subscription;
-      } catch (err) {
-        console.error("Error getting subscription:", err);
-        throw new Error("Error getting subscription");
-      }
-    },
-    subscriptionStatistics: async (_, __, context) => {
-      if (!context.getUser()) throw new Error("Unauthorized");
-
-      const userId = context.getUser()._id;
-      const subscriptions = await Subscription.find({ userId });
-      const categoryMap = {};
-
-      subscriptions.forEach((subscription) => {
-        if (!categoryMap[subscription.category]) {
-          categoryMap[subscription.category] = 0;
-        }
-        categoryMap[subscription.category] += subscription.costInDollar;
-      });
-
-      return Object.entries(categoryMap).map(([category, totalAmount]) => ({
-        category,
-        totalAmount,
-      }));
-    },
   },
   Mutation: {
     createSubscription: async (_, { input }, context) => {

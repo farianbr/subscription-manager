@@ -66,30 +66,21 @@ const HomePage = () => {
         categoryMap[transaction.category] += transaction.costInDollar;
       });
 
+      // Color mapping for categories
+      const categoryColors = {
+        productivity: "rgba(75, 192, 192)",
+        entertainment: "rgba(255, 99, 132)",
+        utilities: "rgba(54, 162, 235)",
+        education: "rgba(255, 206, 86)",
+      };
+
       const categories = Object.keys(categoryMap).map(cat => 
         cat.charAt(0).toUpperCase() + cat.slice(1)
       );
       const totalAmounts = Object.values(categoryMap).map(amount => convertFromUSD(amount));
-      
-      const backgroundColors = [];
-      const borderColors = [];
-
-      Object.keys(categoryMap).forEach((category) => {
-        const cat = category.toLowerCase();
-        if (cat === "productivity") {
-          backgroundColors.push("rgba(75, 192, 192)");
-          borderColors.push("rgba(75, 192, 192)");
-        } else if (cat === "entertainment") {
-          backgroundColors.push("rgba(255, 99, 132)");
-          borderColors.push("rgba(255, 99, 132)");
-        } else if (cat === "utilities") {
-          backgroundColors.push("rgba(54, 162, 235)");
-          borderColors.push("rgba(54, 162, 235)");
-        } else if (cat === "education") {
-          backgroundColors.push("rgba(255, 206, 86)");
-          borderColors.push("rgba(255, 206, 86)");
-        }
-      });
+      const colors = Object.keys(categoryMap).map(cat => 
+        categoryColors[cat.toLowerCase()] || "rgba(150, 150, 150)"
+      );
 
       setChartData((prev) => ({
         labels: categories,
@@ -97,8 +88,8 @@ const HomePage = () => {
           {
             ...prev.datasets[0],
             data: totalAmounts,
-            backgroundColor: backgroundColors,
-            borderColor: borderColors,
+            backgroundColor: colors,
+            borderColor: colors,
           },
         ],
       }));
@@ -149,18 +140,16 @@ const HomePage = () => {
   // Calculate total cost of all active subscriptions (normalized to monthly)
   const getTotalActiveCost = () => {
     if (!subscriptionData?.subscriptions) return 0;
+    
+    const cycleMultipliers = {
+      weekly: 4,
+      monthly: 1,
+      yearly: 1/12
+    };
+    
     return subscriptionData.subscriptions.reduce((total, sub) => {
-      let monthlyCost = sub.costInDollar;
-      
-      // Normalize to monthly cost based on billing cycle
-      if (sub.billingCycle === 'yearly') {
-        monthlyCost = sub.costInDollar / 12;
-      } else if (sub.billingCycle === 'weekly') {
-        monthlyCost = sub.costInDollar * 4;
-      }
-      // monthly stays the same
-      
-      return total + monthlyCost;
+      const multiplier = cycleMultipliers[sub.billingCycle] || 1;
+      return total + (sub.costInDollar * multiplier);
     }, 0);
   };
 
@@ -169,16 +158,15 @@ const HomePage = () => {
     if (!historyData?.monthlyHistory) return 0;
     
     const now = new Date();
-    const lastMonth = now.getMonth() === 0 ? 12 : now.getMonth(); // Handle January (0 -> December)
-    const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                       'July', 'August', 'September', 'October', 'November', 'December'];
     
     // Find the month data
-    const lastMonthData = historyData.monthlyHistory.find(month => {
-      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                         'July', 'August', 'September', 'October', 'November', 'December'];
-      const monthName = monthNames[lastMonth - 1];
-      return month.month === monthName && month.year === lastMonthYear;
-    });
+    const lastMonthData = historyData.monthlyHistory.find(month => 
+      month.month === monthNames[lastMonth.getMonth()] && 
+      month.year === lastMonth.getFullYear()
+    );
     
     return lastMonthData?.totalSpent || 0;
   };

@@ -18,13 +18,6 @@ const subscriptionTypeDef = `#graphql
 
     type Query {
         subscriptions: [Subscription!]
-        subscription(subscriptionId: ID!): Subscription
-        subscriptionStatistics: [CategoryStatistics!]
-    }
-
-    type CategoryStatistics {
-        category: String!
-        totalAmount: Float!
     }
 
     type Mutation {

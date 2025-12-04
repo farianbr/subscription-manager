@@ -35,6 +35,14 @@ export const UPDATE_PROFILE = gql`
       name
       email
       currency
+      profilePicture
+      paymentMethods {
+        id
+        name
+        type
+        last4
+        isDefault
+      }
     }
   }
 `;
@@ -43,6 +51,14 @@ export const UPDATE_PASSWORD = gql`
   mutation UpdatePassword($input: UpdatePasswordInput!) {
     updatePassword(input: $input) {
       _id
+      profilePicture
+      paymentMethods {
+        id
+        name
+        type
+        last4
+        isDefault
+      }
     }
   }
 `;

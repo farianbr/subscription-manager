@@ -5,6 +5,7 @@ import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
 import { 
   UPDATE_PROFILE, 
   UPDATE_PASSWORD, 
+  UPDATE_PROFILE_PICTURE,
   ADD_PAYMENT_METHOD, 
   REMOVE_PAYMENT_METHOD,
   SET_DEFAULT_PAYMENT_METHOD 
@@ -12,6 +13,7 @@ import {
 import toast from "react-hot-toast";
 import { useCurrency } from "../context/CurrencyContext";
 import Modal from "../components/ui/Modal";
+import { uploadImageToImgBB } from "../lib/imageUpload";
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -22,6 +24,8 @@ const SettingsPage = () => {
   const [updateProfile, { loading: profileLoading }] = useMutation(UPDATE_PROFILE);
   
   const [updatePassword, { loading: passwordLoading }] = useMutation(UPDATE_PASSWORD);
+  
+  const [updateProfilePicture] = useMutation(UPDATE_PROFILE_PICTURE);
   
   const [addPaymentMethod, { loading: addingPayment }] = useMutation(ADD_PAYMENT_METHOD);
   
@@ -278,77 +282,173 @@ const SettingsPage = () => {
           <div className="p-6">
             {/* Profile Tab */}
             {activeTab === "profile" && (
-              <form onSubmit={handleProfileSubmit} className="space-y-6 max-w-xl">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={profileData.name}
-                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
+              <div className="space-y-6 max-w-xl">
+                {/* Profile Picture Section */}
+                <div className="flex items-center space-x-6 pb-6 border-b border-slate-200">
+                  <div className="relative">
+                    {userData?.authUser?.profilePicture ? (
+                      <img
+                        src={userData.authUser.profilePicture}
+                        alt={userData.authUser.name}
+                        className="w-24 h-24 rounded-full object-cover border-4 border-slate-200"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-3xl border-4 border-slate-200">
+                        {userData?.authUser?.name
+                          ?.split(' ')
+                          .map(n => n[0])
+                          .join('')
+                          .toUpperCase()
+                          .slice(0, 2) || 'U'}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Profile Picture</h3>
+                    <p className="text-sm text-slate-600 mb-3">
+                      Upload an image from your device
+                    </p>
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="profile-picture-upload"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              toast.loading("Uploading image...", { id: "upload" });
+                              
+                              // Upload to ImgBB using the utility function
+                              const imageUrl = await uploadImageToImgBB(file);
+
+                              // Update profile picture in database
+                              await updateProfilePicture({
+                                variables: { profilePicture: imageUrl },
+                                refetchQueries: ["GetAuthenticatedUser"],
+                              });
+                              
+                              toast.success("Profile picture updated!", { id: "upload" });
+                            } catch (err) {
+                              console.error("Upload error:", err);
+                              toast.error(err.message, { id: "upload" });
+                            }
+                            
+                            // Reset input
+                            e.target.value = "";
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor="profile-picture-upload"
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                      >
+                        Choose Image
+                      </label>
+                      {userData?.authUser?.profilePicture && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              await updateProfilePicture({
+                                variables: { profilePicture: "" },
+                                refetchQueries: ["GetAuthenticatedUser"],
+                              });
+                              toast.success("Profile picture removed!");
+                            } catch (err) {
+                              toast.error(err.message);
+                            }
+                          }}
+                          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">
+                      JPG, PNG or GIF. Max size 5MB
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={profileData.email}
-                    onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
+                {/* Profile Form */}
+                <form onSubmit={handleProfileSubmit} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      value={profileData.name}
+                      onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    Currency
-                  </label>
-                  <select
-                    value={profileData.currency}
-                    onChange={(e) => setProfileData({ ...profileData, currency: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={profileData.email}
+                      onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      Currency
+                    </label>
+                    <select
+                      value={profileData.currency}
+                      onChange={(e) => setProfileData({ ...profileData, currency: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="USD">USD - US Dollar</option>
+                      <option value="EUR">EUR - Euro</option>
+                      <option value="GBP">GBP - British Pound</option>
+                      <option value="INR">INR - Indian Rupee</option>
+                      <option value="BDT">BDT - Bangladeshi Taka</option>
+                      <option value="CAD">CAD - Canadian Dollar</option>
+                      <option value="AUD">AUD - Australian Dollar</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={profileLoading}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50"
                   >
-                    <option value="USD">USD - US Dollar</option>
-                    <option value="EUR">EUR - Euro</option>
-                    <option value="GBP">GBP - British Pound</option>
-                    <option value="INR">INR - Indian Rupee</option>
-                    <option value="BDT">BDT - Bangladeshi Taka</option>
-                    <option value="CAD">CAD - Canadian Dollar</option>
-                    <option value="AUD">AUD - Australian Dollar</option>
-                  </select>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={profileLoading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50"
-                >
-                  {profileLoading ? "Updating..." : "Update Profile"}
-                </button>
-              </form>
+                    {profileLoading ? "Updating..." : "Update Profile"}
+                  </button>
+                </form>
+              </div>
             )}
 
             {/* Security Tab */}
             {activeTab === "security" && (
-              <form onSubmit={handlePasswordSubmit} className="space-y-6 max-w-xl">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
+              <div className="space-y-8 max-w-xl">
+                {/* Change Password Section */}
+                <form onSubmit={handlePasswordSubmit} className="space-y-6">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Change Password</h3>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      Current Password
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordData.currentPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -384,6 +484,7 @@ const SettingsPage = () => {
                   {passwordLoading ? "Updating..." : "Update Password"}
                 </button>
               </form>
+              </div>
             )}
 
             {/* Payment Methods Tab */}

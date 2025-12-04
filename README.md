@@ -8,19 +8,15 @@ It helps users keep track of their subscriptions, set alerts, and receive email 
 ## ✨ Features
 
 - 🔐 **Authentication & Authorization**
-  - User signup with email verification (via SendGrid SMTP).
+  - User signup and auto-login.
   - Secure password hashing with `bcrypt`.
   - Login sessions using Passport.js.
 
-- 📬 **Email Notifications**
-  - Verification email during signup.
-  - Subscription renewal alerts (1 day before end date).
-  - Background jobs scheduled using `node-cron`.
-
 - 📊 **Subscriptions Management**
   - Create, update, delete subscriptions.
-  - Track provider, category, amount, payment type, and end date.
+  - Track provider, category, amount, payment type, and billing dates.
   - Toggle alerts on/off for each subscription.
+  - Multi-currency support (USD, EUR, GBP, INR, BDT, CAD, AUD).
 
 - 🎨 **Frontend (React + TailwindCSS)**
   - Responsive, modern UI.
@@ -50,16 +46,20 @@ It helps users keep track of their subscriptions, set alerts, and receive email 
 - Apollo Server (GraphQL)
 - Passport.js (authentication)
 - Bcrypt (password hashing)
-- Nodemailer + SendGrid SMTP (emails)
 - Node-cron (scheduled tasks)
 
 **Database:**
 - MongoDB (via Mongoose)
 
+**Image Storage:**
+- ImgBB API (profile picture uploads)
+
 ---
 
 ## 📌 Future Improvements
 
-- Active vs. Inactive status (based on end date).
-- Allow users to change reminder frequency.
+- Push notifications for subscription reminders.
+- Active vs. Inactive status (based on billing date).
+- Export subscription data to CSV/PDF.
+- Bulk subscription management.
 

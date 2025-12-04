@@ -35,11 +35,22 @@ const Header = () => {
 					{/* User Profile */}
 					<div className='flex items-center space-x-3'>
 						<div className='flex items-center space-x-3 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200'>
-							<img
-								src={authUserData?.authUser.profilePicture}
-								className='w-8 h-8 rounded-full object-cover border border-slate-200'
-								alt='Profile'
-							/>
+							{authUserData?.authUser.profilePicture ? (
+								<img
+									src={authUserData.authUser.profilePicture}
+									className='w-8 h-8 rounded-full object-cover border border-slate-200'
+									alt='Profile'
+								/>
+							) : (
+								<div className='w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm'>
+									{authUserData?.authUser.name
+										?.split(' ')
+										.map(n => n[0])
+										.join('')
+										.toUpperCase()
+										.slice(0, 2) || 'U'}
+								</div>
+							)}
 							<div className='hidden sm:block'>
 								<p className='text-slate-900 font-medium text-sm'>{authUserData?.authUser.name}</p>
 								{authUserData?.authUser.username && (

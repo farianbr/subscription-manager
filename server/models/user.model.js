@@ -23,9 +23,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["male", "female"],
     },
-    isVerified: { type: Boolean, default: false },
-    verificationToken: String,
-    verificationTokenExpires: Date,
     currency: {
       type: String,
       default: "USD",

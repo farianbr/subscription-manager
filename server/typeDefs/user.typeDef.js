@@ -29,6 +29,7 @@ const userTypeDef = `#graphql
         logout: LogoutResponse
         updateProfile(input: UpdateProfileInput!): User
         updatePassword(input: UpdatePasswordInput!): User
+        updateProfilePicture(profilePicture: String!): User
         addPaymentMethod(input: PaymentMethodInput!): User
         removePaymentMethod(paymentMethodId: String!): User
         setDefaultPaymentMethod(paymentMethodId: String!): User

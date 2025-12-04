@@ -1,7 +1,6 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { sendMail } from "../utils/mailer.js";
 
 const userResolver = {
   Query: {
@@ -26,7 +25,7 @@ const userResolver = {
   },
 
   Mutation: {
-    signUp: async (_, { input }) => {
+    signUp: async (_, { input }, context) => {
       try {
         const { email, name, password, gender } = input;
         if (!email || !password || !name || !gender) throw new Error("All fields are required");
@@ -38,42 +37,21 @@ const userResolver = {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const boyProfilePic = `https://avatar.iran.liara.run/public/boy?email=${email}`;
-        const girlProfilePic = `https://avatar.iran.liara.run/public/girl?email=${email}`;
-
-        // generate token
-        const token = crypto.randomBytes(32).toString("hex");
-
-        // create user
+        // create user (no profilePicture - will use name initials by default)
         const newUser = new User({
           email,
           name,
           password: hashedPassword,
           gender,
-          profilePicture: gender === "male" ? boyProfilePic : girlProfilePic,
-          isVerified: false,
-          verificationToken: token,
-          verificationTokenExpires: Date.now() + 24 * 60 * 60 * 1000, // 24h
+          profilePicture: "", // Empty - frontend will show initials
         });
 
         await newUser.save();
 
-        // send verification mail
-        const verifyUrl = `https://subscription-manager-qgi7.onrender.com/verify-email?token=${token}`;
-        await sendMail({
-          to: email,
-          subject: "Verify your email",
-          text: `Hi ${name}, please verify your email by clicking this link: ${verifyUrl}`,
-          html: `<p>Hi ${name},</p>
-             <p>Please verify your email by clicking the link below:</p>
-             <a href="${verifyUrl}">Verify Email</a>`,
-        });
+        // Automatically log in the user after signup
+        await context.login(newUser);
 
-        return {
-          ...newUser.toObject(),
-          message:
-            "Signup successful, please check your email to verify your account",
-        };
+        return newUser;
       } catch (err) {
         console.error("Error in signUp: ", err);
         throw new Error(err.message || "Internal server error");
@@ -90,8 +68,6 @@ const userResolver = {
         });
 
         if (!user) throw new Error(info?.message || "Invalid credentials");
-        if (!user.isVerified)
-          throw new Error("Please verify your email before logging in");
 
         await context.login(user);
         return user;
@@ -166,6 +142,24 @@ const userResolver = {
         return updatedUser;
       } catch (err) {
         console.error("Error in updatePassword:", err);
+        throw new Error(err.message || "Internal server error");
+      }
+    },
+
+    updateProfilePicture: async (_, { profilePicture }, context) => {
+      try {
+        const user = await context.getUser();
+        if (!user) throw new Error("Unauthorized");
+
+        const updatedUser = await User.findByIdAndUpdate(
+          user._id,
+          { profilePicture },
+          { new: true }
+        );
+
+        return updatedUser;
+      } catch (err) {
+        console.error("Error in updateProfilePicture:", err);
         throw new Error(err.message || "Internal server error");
       }
     },

@@ -14,9 +14,10 @@ const SignUpPage = () => {
     password: "",
     gender: "",
   });
-  // const navigate = useNavigate()
-  const [signUp, { loading }] = useMutation(SIGN_UP);
   const navigate = useNavigate();
+  const [signUp, { loading }] = useMutation(SIGN_UP, {
+    refetchQueries: [{ query: GET_AUTHENTICATED_USER }],
+  });
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -52,11 +53,12 @@ const SignUpPage = () => {
       if (data?.signUp) {
         // show a success toast
         toast.success(
-          "Signup successful! Please verify your email before logging in."
+          "Signup successful! Welcome to Subscription Manager.",
+          { duration: 4000 }
         );
 
-        // redirect to login page
-        navigate("/login");
+        // redirect to home page (user is now logged in)
+        navigate("/");
       }
     } catch (err) {
       console.error(err);

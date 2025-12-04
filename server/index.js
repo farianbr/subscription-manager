@@ -96,25 +96,6 @@ if (process.env.NODE_ENV === "production") {
 }
 
 
-app.get("/verify-email", async (req, res) => {
-  const { token } = req.query;
-  if (!token) return res.status(400).send("Invalid token");
-
-  const user = await User.findOne({
-    verificationToken: token,
-    verificationTokenExpires: { $gt: Date.now() },
-  });
-
-  if (!user) return res.status(400).send("Token invalid or expired");
-
-  user.isVerified = true;
-  user.verificationToken = undefined;
-  user.verificationTokenExpires = undefined;
-  await user.save();
-
-  res.send("✅ Email verified successfully. You can now log in.");
-});
-
 app.use(express.static(path.join(__dirname, "client/dist")));
 
 

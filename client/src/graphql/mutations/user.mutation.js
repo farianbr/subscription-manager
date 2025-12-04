@@ -63,6 +63,24 @@ export const UPDATE_PASSWORD = gql`
   }
 `;
 
+export const UPDATE_PROFILE_PICTURE = gql`
+  mutation UpdateProfilePicture($profilePicture: String!) {
+    updateProfilePicture(profilePicture: $profilePicture) {
+      _id
+      name
+      email
+      profilePicture
+      paymentMethods {
+        id
+        name
+        type
+        last4
+        isDefault
+      }
+    }
+  }
+`;
+
 export const ADD_PAYMENT_METHOD = gql`
   mutation AddPaymentMethod($input: PaymentMethodInput!) {
     addPaymentMethod(input: $input) {

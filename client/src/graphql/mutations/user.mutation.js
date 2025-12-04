@@ -51,6 +51,9 @@ export const UPDATE_PASSWORD = gql`
   mutation UpdatePassword($input: UpdatePasswordInput!) {
     updatePassword(input: $input) {
       _id
+      name
+      email
+      currency
       profilePicture
       paymentMethods {
         id
@@ -69,6 +72,7 @@ export const UPDATE_PROFILE_PICTURE = gql`
       _id
       name
       email
+      currency
       profilePicture
       paymentMethods {
         id
@@ -85,6 +89,10 @@ export const ADD_PAYMENT_METHOD = gql`
   mutation AddPaymentMethod($input: PaymentMethodInput!) {
     addPaymentMethod(input: $input) {
       _id
+      name
+      email
+      currency
+      profilePicture
       paymentMethods {
         id
         name
@@ -100,6 +108,10 @@ export const REMOVE_PAYMENT_METHOD = gql`
   mutation RemovePaymentMethod($paymentMethodId: String!) {
     removePaymentMethod(paymentMethodId: $paymentMethodId) {
       _id
+      name
+      email
+      currency
+      profilePicture
       paymentMethods {
         id
         name
@@ -115,6 +127,10 @@ export const SET_DEFAULT_PAYMENT_METHOD = gql`
   mutation SetDefaultPaymentMethod($paymentMethodId: String!) {
     setDefaultPaymentMethod(paymentMethodId: $paymentMethodId) {
       _id
+      name
+      email
+      currency
+      profilePicture
       paymentMethods {
         id
         name

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
 import { 
   UPDATE_PROFILE, 
@@ -17,6 +17,7 @@ import { uploadImageToImgBB } from "../lib/imageUpload";
 
 const SettingsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { data: userData, loading: userLoading } = useQuery(GET_AUTHENTICATED_USER);
   const { setCurrency: setGlobalCurrency } = useCurrency();
@@ -52,7 +53,17 @@ const SettingsPage = () => {
     isDefault: false,
   });
 
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState(() => {
+    // First check location state (from navigation)
+    if (location.state?.tab) {
+      return location.state.tab;
+    }
+    // Then check URL parameter
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab === "payment") return "payments"; // Support singular form
+    if (tab && ["profile", "security", "payments"].includes(tab)) return tab;
+    return "profile"; // Default tab
+  });
   const [settingDefaultId, setSettingDefaultId] = useState(null);
   const [deletingPaymentId, setDeletingPaymentId] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -69,13 +80,27 @@ const SettingsPage = () => {
     }
   }, [userData]);
 
-  // Check for tab parameter in URL
+  // Sync activeTab with location state or URL parameter changes
   useEffect(() => {
+    // Priority 1: Check location state
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+      return;
+    }
+    
+    // Priority 2: Check URL parameter
     const tab = searchParams.get("tab");
-    if (tab && ["profile", "security", "payment"].includes(tab)) {
+    if (!tab) {
+      // No tab parameter in URL, keep current tab
+      return;
+    }
+    // Support both 'payment' and 'payments' for backwards compatibility
+    if (tab === "payment") {
+      setActiveTab("payments");
+    } else if (["profile", "security", "payments"].includes(tab)) {
       setActiveTab(tab);
     }
-  }, [searchParams]);
+  }, [location.state, searchParams]);
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();

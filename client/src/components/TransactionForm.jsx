@@ -2,6 +2,7 @@ import { CREATE_SUBSCRIPTION } from "../graphql/mutations/subscription.mutation"
 import { useMutation, useQuery } from "@apollo/client/react";
 import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { getCompanyOptions } from "../lib/companyLogos";
 
@@ -190,7 +191,7 @@ const TransactionForm = ({ onSuccess }) => {
             </select>
             {(!userData?.authUser?.paymentMethods || userData.authUser.paymentMethods.length === 0) && (
               <p className="text-xs text-slate-500 mt-1">
-                Add payment methods in <a href="/settings?tab=payment" className="text-blue-600 hover:underline">Settings</a>
+                Add payment methods in <Link to="/settings" state={{ tab: "payments" }} className="text-blue-600 hover:underline">Settings</Link>
               </p>
             )}
           </div>

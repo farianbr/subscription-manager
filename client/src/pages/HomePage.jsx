@@ -1,5 +1,5 @@
-import { Doughnut } from "react-chartjs-2";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import { Doughnut, Bar } from "react-chartjs-2";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from "chart.js";
 import { Link } from "react-router-dom";
 
 import Cards from "../components/Cards";
@@ -7,16 +7,14 @@ import TransactionForm from "../components/TransactionForm";
 import Modal from "../components/ui/Modal";
 
 import { useQuery } from "@apollo/client/react";
-import { GET_SUBSCRIPTION_STATISTICS } from "../graphql/queries/subscription.queries";
 import { GET_SUBSCRIPTIONS } from "../graphql/queries/subscription.queries";
 import { GET_MONTHLY_HISTORY } from "../graphql/queries/transaction.queries";
 import { useEffect, useState } from "react";
 import { useCurrency } from "../context/CurrencyContext";
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 const HomePage = () => {
-  const { data } = useQuery(GET_SUBSCRIPTION_STATISTICS);
   const { data: subscriptionData } = useQuery(GET_SUBSCRIPTIONS);
   const { data: historyData } = useQuery(GET_MONTHLY_HISTORY);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,29 +36,56 @@ const HomePage = () => {
     ],
   });
 
+  const [providerChartData, setProviderChartData] = useState({
+    labels: [],
+    datasets: [
+      {
+        label: "$",
+        data: [],
+        backgroundColor: [],
+        borderColor: [],
+        borderWidth: 1,
+        borderRadius: 30,
+        spacing: 10,
+        cutout: 120,
+      },
+    ],
+  });
+
   useEffect(() => {
-    if (data?.subscriptionStatistics) {
-      const categories = data.subscriptionStatistics.map((stat) => 
-        stat.category.charAt(0).toUpperCase() + stat.category.slice(1)
+    if (historyData?.monthlyHistory && historyData.monthlyHistory.length > 0) {
+      // Get all transactions from history
+      const allTransactions = historyData.monthlyHistory.flatMap(month => month.transactions);
+      
+      // Group by category
+      const categoryMap = {};
+      allTransactions.forEach((transaction) => {
+        if (!categoryMap[transaction.category]) {
+          categoryMap[transaction.category] = 0;
+        }
+        categoryMap[transaction.category] += transaction.costInDollar;
+      });
+
+      const categories = Object.keys(categoryMap).map(cat => 
+        cat.charAt(0).toUpperCase() + cat.slice(1)
       );
-      const totalAmounts = data.subscriptionStatistics.map(
-        (stat) => convertFromUSD(stat.totalAmount)
-      );
+      const totalAmounts = Object.values(categoryMap).map(amount => convertFromUSD(amount));
+      
       const backgroundColors = [];
       const borderColors = [];
 
-      data.subscriptionStatistics.forEach((stat) => {
-        const category = stat.category.toLowerCase();
-        if (category === "productivity") {
+      Object.keys(categoryMap).forEach((category) => {
+        const cat = category.toLowerCase();
+        if (cat === "productivity") {
           backgroundColors.push("rgba(75, 192, 192)");
           borderColors.push("rgba(75, 192, 192)");
-        } else if (category === "entertainment") {
+        } else if (cat === "entertainment") {
           backgroundColors.push("rgba(255, 99, 132)");
           borderColors.push("rgba(255, 99, 132)");
-        } else if (category === "utilities") {
+        } else if (cat === "utilities") {
           backgroundColors.push("rgba(54, 162, 235)");
           borderColors.push("rgba(54, 162, 235)");
-        } else if (category === "education") {
+        } else if (cat === "education") {
           backgroundColors.push("rgba(255, 206, 86)");
           borderColors.push("rgba(255, 206, 86)");
         }
@@ -78,34 +103,104 @@ const HomePage = () => {
         ],
       }));
     }
-  }, [data, convertFromUSD]);
+  }, [historyData, convertFromUSD]);
 
-  const getCurrentMonthSpending = () => {
-    if (!historyData?.monthlyHistory) return 0;
-    
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1; // JS months are 0-indexed
-    const currentYear = now.getFullYear();
-    
-    const currentMonthData = historyData.monthlyHistory.find(
-      (month) => month.month === currentMonth && month.year === currentYear
-    );
-    
-    return currentMonthData?.totalSpent || 0;
+  // Generate provider chart data from transactions
+  useEffect(() => {
+    if (historyData?.monthlyHistory && historyData.monthlyHistory.length > 0) {
+      // Get all transactions from history
+      const allTransactions = historyData.monthlyHistory.flatMap(month => month.transactions);
+      
+      // Group transactions by provider
+      const providerMap = {};
+      allTransactions.forEach((transaction) => {
+        const provider = transaction.provider.charAt(0).toUpperCase() + transaction.provider.slice(1);
+        if (!providerMap[provider]) {
+          providerMap[provider] = 0;
+        }
+        providerMap[provider] += transaction.costInDollar;
+      });
+
+      const providers = Object.keys(providerMap);
+      const amounts = Object.values(providerMap).map(amount => convertFromUSD(amount));
+      
+      // Single subtle color for all bars
+      const barColor = "rgba(20, 30, 49, 0.7)"; // Blue with transparency
+      const borderColor = "#151f30"; // Solid blue border
+
+      setProviderChartData({
+        labels: providers,
+        datasets: [
+          {
+            label: "Spending",
+            data: amounts,
+            backgroundColor: barColor,
+            borderColor: borderColor,
+            borderWidth: 1,
+            borderRadius: 6,
+            barThickness: 20,
+            maxBarThickness: 25,
+          },
+        ],
+      });
+    }
+  }, [historyData, convertFromUSD]);
+
+  // Calculate total cost of all active subscriptions (normalized to monthly)
+  const getTotalActiveCost = () => {
+    if (!subscriptionData?.subscriptions) return 0;
+    return subscriptionData.subscriptions.reduce((total, sub) => {
+      let monthlyCost = sub.costInDollar;
+      
+      // Normalize to monthly cost based on billing cycle
+      if (sub.billingCycle === 'yearly') {
+        monthlyCost = sub.costInDollar / 12;
+      } else if (sub.billingCycle === 'weekly') {
+        monthlyCost = sub.costInDollar * 4;
+      }
+      // monthly stays the same
+      
+      return total + monthlyCost;
+    }, 0);
   };
 
-  const getLastMonthSpending = () => {
+  // Get last month's bill from transaction history
+  const getLastMonthBill = () => {
     if (!historyData?.monthlyHistory) return 0;
     
     const now = new Date();
     const lastMonth = now.getMonth() === 0 ? 12 : now.getMonth(); // Handle January (0 -> December)
     const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
     
-    const lastMonthData = historyData.monthlyHistory.find(
-      (month) => month.month === lastMonth && month.year === lastMonthYear
-    );
+    // Find the month data
+    const lastMonthData = historyData.monthlyHistory.find(month => {
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+      const monthName = monthNames[lastMonth - 1];
+      return month.month === monthName && month.year === lastMonthYear;
+    });
     
     return lastMonthData?.totalSpent || 0;
+  };
+
+  // Get next billing date from subscriptions
+  const getNextBillingDate = () => {
+    if (!subscriptionData?.subscriptions || subscriptionData.subscriptions.length === 0) {
+      return null;
+    }
+
+    // Find the subscription with the earliest next billing date
+    const nextBilling = subscriptionData.subscriptions.reduce((earliest, sub) => {
+      const subDate = new Date(parseInt(sub.nextBillingDate));
+      const earliestDate = earliest ? new Date(parseInt(earliest.nextBillingDate)) : null;
+      
+      if (!earliestDate || subDate < earliestDate) {
+        return sub;
+      }
+      return earliest;
+    }, null);
+
+    return nextBilling;
   };
 
   return (
@@ -156,7 +251,7 @@ const HomePage = () => {
             {/* Quick Stats Cards */}
             <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-slate-600">Total Subscriptions</h3>
+                <h3 className="text-sm font-medium text-slate-600">Active Subscriptions</h3>
                 <div className="p-2 bg-blue-50 rounded-lg">
                   <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -166,12 +261,12 @@ const HomePage = () => {
               <p className="text-3xl font-bold text-slate-900">
                 {subscriptionData?.subscriptions?.length || 0}
               </p>
-              <p className="text-sm text-slate-500 mt-1">Active services</p>
+              <p className="text-sm text-slate-500 mt-1">Total services</p>
             </div>
 
             <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-slate-600">Total Monthly Cost</h3>
+                <h3 className="text-sm font-medium text-slate-600">Active Subscription Cost</h3>
                 <div className="p-2 bg-green-50 rounded-lg">
                   <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -179,103 +274,156 @@ const HomePage = () => {
                 </div>
               </div>
               <p className="text-3xl font-bold text-slate-900">
-                {formatCurrency(data?.subscriptionStatistics ? data.subscriptionStatistics.reduce((total, stat) => total + stat.totalAmount, 0) : 0)}
+                {formatCurrency(getTotalActiveCost())}
               </p>
-              <p className="text-sm text-slate-500 mt-1">All categories</p>
+              <p className="text-sm text-slate-500 mt-1">Monthly total</p>
             </div>
 
             <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-slate-600">This Month</h3>
+                <h3 className="text-sm font-medium text-slate-600">Last Month Bill</h3>
                 <div className="p-2 bg-purple-50 rounded-lg">
                   <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-3xl font-bold text-slate-900">
-                {formatCurrency(getCurrentMonthSpending())}
-              </p>
-              <p className="text-sm text-slate-500 mt-1">Current spending</p>
-            </div>
-
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-slate-600">Last Month</h3>
-                <div className="p-2 bg-indigo-50 rounded-lg">
-                  <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                 </div>
               </div>
               <p className="text-3xl font-bold text-slate-900">
-                {formatCurrency(getLastMonthSpending())}
+                {formatCurrency(getLastMonthBill())}
               </p>
-              <p className="text-sm text-slate-500 mt-1">Previous spending</p>
+              <p className="text-sm text-slate-500 mt-1">As per transactions</p>
+            </div>
+
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-slate-600">Next Bill</h3>
+                <div className="p-2 bg-indigo-50 rounded-lg">
+                  <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+              {(() => {
+                const nextBilling = getNextBillingDate();
+                if (nextBilling) {
+                  const nextDate = new Date(parseInt(nextBilling.nextBillingDate));
+                  const day = nextDate.getDate();
+                  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                  const month = monthNames[nextDate.getMonth()];
+                  const formattedDate = `${day} ${month}`;
+                  
+                  return (
+                    <>
+                      <p className="text-3xl font-bold text-slate-900">
+                        {formatCurrency(nextBilling.costInDollar)}
+                      </p>
+                      <p className="text-sm text-slate-500 mt-1 capitalize">{nextBilling.serviceName} - {formattedDate}</p>
+                    </>
+                  );
+                } else {
+                  return (
+                    <>
+                      <p className="text-3xl font-bold text-slate-900">--</p>
+                      <p className="text-sm text-slate-500 mt-1">No Upcoming Bills</p>
+                    </>
+                  );
+                }
+              })()}
             </div>
           </div>
 
-          {/* Spending Overview Chart */}
-          {data?.subscriptionStatistics && data.subscriptionStatistics.length > 0 && (
+          {/* Spending Overview Charts */}
+          {historyData?.monthlyHistory && historyData.monthlyHistory.length > 0 && (
             <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 mb-8">
-              <h2 className="text-xl font-bold text-slate-900 mb-6">Spending by Category</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-6">Spending Overview</h2>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                {/* Chart */}
-                <div className="h-80 flex items-center justify-center">
-                  <Doughnut
-                    data={chartData}
-                    options={{
-                      plugins: {
-                        legend: {
-                          position: 'bottom',
-                          labels: {
-                            color: "#475569",
-                            font: {
-                              size: 13,
-                              family: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif"
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Spending by Provider - Bar Chart */}
+                {providerChartData.labels && providerChartData.labels.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-800 mb-4">By Provider</h3>
+                    <div className="h-80">
+                      <Bar
+                        data={providerChartData}
+                        options={{
+                          indexAxis: 'y',
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          plugins: {
+                            legend: {
+                              display: false,
                             },
-                            padding: 16,
-                            usePointStyle: true,
-                            pointStyle: 'circle',
+                            tooltip: {
+                              callbacks: {
+                                label: (context) => {
+                                  const value = context.parsed.x || 0;
+                                  return `${getCurrencySymbol()}${value.toFixed(2)}`;
+                                }
+                              }
+                            }
                           },
-                        },
-                        tooltip: {
-                          callbacks: {
-                            label: (context) => {
-                              const label = context.label || '';
-                              const value = context.parsed || 0;
-                              return `${label}: ${getCurrencySymbol()}${value.toFixed(2)}`;
+                          scales: {
+                            x: {
+                              beginAtZero: true,
+                              grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                              },
+                              ticks: {
+                                callback: function(value) {
+                                  return getCurrencySymbol() + value;
+                                }
+                              }
+                            },
+                            y: {
+                              grid: {
+                                display: false,
+                              }
                             }
                           }
-                        }
-                      },
-                      maintainAspectRatio: false,
-                    }}
-                  />
-                </div>
-                
-                {/* Category List */}
-                <div className="space-y-3">
-                  {data.subscriptionStatistics.map((stat, index) => {
-                    const percentage = ((stat.totalAmount / data.subscriptionStatistics.reduce((t, s) => t + s.totalAmount, 0)) * 100).toFixed(1);
-                    return (
-                      <div key={stat.category} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div 
-                            className="w-4 h-4 rounded"
-                            style={{ backgroundColor: chartData.datasets[0].backgroundColor[index] }}
-                          ></div>
-                          <span className="capitalize text-slate-700 font-medium">{stat.category}</span>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-slate-900">{formatCurrency(stat.totalAmount)}</p>
-                          <p className="text-sm text-slate-500">{percentage}%</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Spending by Category - Doughnut Chart */}
+                {chartData.labels && chartData.labels.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-800 mb-4">By Category</h3>
+                    <div className="h-80 flex items-center justify-center">
+                      <Doughnut
+                        data={chartData}
+                        options={{
+                          plugins: {
+                            legend: {
+                              position: 'bottom',
+                              labels: {
+                                color: "#475569",
+                                font: {
+                                  size: 13,
+                                  family: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif"
+                                },
+                                padding: 16,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                              },
+                            },
+                            tooltip: {
+                              callbacks: {
+                                label: (context) => {
+                                  const label = context.label || '';
+                                  const value = context.parsed || 0;
+                                  return `${label}: ${getCurrencySymbol()}${value.toFixed(2)}`;
+                                }
+                              }
+                            }
+                          },
+                          maintainAspectRatio: false,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

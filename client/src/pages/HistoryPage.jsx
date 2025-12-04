@@ -15,13 +15,8 @@ const HistoryPage = () => {
     investment: "bg-blue-100 text-blue-700",
   };
 
-  const getMonthName = (month) => {
-    const months = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-    return months[month - 1];
-  };
+  // The month is already a string from the backend (e.g., "January", "February")
+  // So we don't need to convert it anymore
 
   if (loading) {
     return (
@@ -45,7 +40,7 @@ const HistoryPage = () => {
   const monthlyHistory = data?.monthlyHistory || [];
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-8 pt-8">
+    <div className="min-h-screen bg-slate-50 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         
         {/* Back Button */}
@@ -85,12 +80,8 @@ const HistoryPage = () => {
                 <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
                   <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold text-slate-900">
-                      {getMonthName(month.month)} {month.year}
+                      {month.month} {month.year}
                     </h2>
-                    <div className="text-right">
-                      <p className="text-sm text-slate-500 mb-1">Total Spent</p>
-                      <p className="text-2xl font-bold text-slate-900">{formatCurrency(month.totalSpent)}</p>
-                    </div>
                   </div>
                 </div>
 
@@ -144,8 +135,8 @@ const HistoryPage = () => {
                         {/* Amount */}
                         <div className="text-right ml-4">
                           <p className="text-lg font-bold text-slate-900">{formatCurrency(transaction.costInDollar)}</p>
-                          {transaction.paymentMethodId && (
-                            <p className="text-xs text-slate-500">Payment ID: {transaction.paymentMethodId.slice(0, 8)}...</p>
+                          {transaction.paymentMethodName && (
+                            <p className="text-xs text-slate-500">Paid by: {transaction.paymentMethodName}</p>
                           )}
                         </div>
                       </div>

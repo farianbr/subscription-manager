@@ -16,6 +16,7 @@ export const GET_MONTHLY_HISTORY = gql`
         billingCycle
         billingDate
         paymentMethodId
+        paymentMethodName
       }
     }
   }

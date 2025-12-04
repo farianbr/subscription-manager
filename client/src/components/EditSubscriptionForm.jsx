@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { getCompanyOptions } from "../lib/companyLogos";
 
-const EditTransactionForm = ({ subscription, onSuccess, onCancel }) => {
+const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
   const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
   const [updateSubscription, { loading }] = useMutation(UPDATE_SUBSCRIPTION, {
     refetchQueries: ["GetSubscriptions", "GetSubscriptionStatistics"],
@@ -300,4 +300,4 @@ const EditTransactionForm = ({ subscription, onSuccess, onCancel }) => {
   );
 };
 
-export default EditTransactionForm;
+export default EditSubscriptionForm;

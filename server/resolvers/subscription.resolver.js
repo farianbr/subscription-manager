@@ -1,5 +1,6 @@
 import Subscription from "../models/subscription.model.js";
 import Transaction from "../models/transaction.model.js";
+import User from "../models/user.model.js";
 
 // Helper function to calculate next billing date from start date
 function calculateNextBillingDate(startDate, billingCycle) {
@@ -83,6 +84,14 @@ const subscriptionResolver = {
         });
         await newSubscription.save();
         
+        // Get payment method name if paymentMethodId is provided
+        let paymentMethodName = null;
+        if (input.paymentMethodId) {
+          const user = await User.findById(context.getUser()._id);
+          const paymentMethod = user.paymentMethods.find(pm => pm.id === input.paymentMethodId);
+          paymentMethodName = paymentMethod?.name || null;
+        }
+        
         // Create first transaction for this billing cycle
         const newTransaction = new Transaction({
           userId: context.getUser()._id,
@@ -94,6 +103,7 @@ const subscriptionResolver = {
           billingCycle: input.billingCycle,
           billingDate: startDate,
           paymentMethodId: input.paymentMethodId,
+          paymentMethodName: paymentMethodName,
         });
         await newTransaction.save();
         

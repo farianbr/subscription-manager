@@ -40,6 +40,9 @@ const transactionSchema = new mongoose.Schema({
   paymentMethodId: {
     type: String,
   },
+  paymentMethodName: {
+    type: String,
+  },
 }, { timestamps: true });
 
 const Transaction = mongoose.model("Transaction", transactionSchema);

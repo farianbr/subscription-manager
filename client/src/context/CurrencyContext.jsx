@@ -63,7 +63,14 @@ export const CurrencyProvider = ({ children }) => {
     };
 
     const symbol = currencySymbols[currency] || currency;
-    const formattedAmount = convertedAmount.toFixed(2);
+    
+    // For BDT and INR, round to integer (no decimals)
+    let formattedAmount;
+    if (currency === 'BDT' || currency === 'INR') {
+      formattedAmount = Math.round(convertedAmount).toString();
+    } else {
+      formattedAmount = convertedAmount.toFixed(2);
+    }
 
     return showSymbol ? `${symbol}${formattedAmount}` : formattedAmount;
   };

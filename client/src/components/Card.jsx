@@ -11,7 +11,7 @@ import { useMutation, useQuery } from "@apollo/client/react";
 import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
 import Modal from "./ui/Modal";
 import { useCurrency } from "../context/CurrencyContext";
-import EditTransactionForm from "./EditTransactionForm";
+import EditSubscriptionForm from "./EditSubscriptionForm";
 import { getCompanyLogo } from "../lib/companyLogos";
 
 const categoryColorMap = {
@@ -140,7 +140,7 @@ const Card = ({ subscription }) => {
                 <h3 className="text-lg font-bold text-slate-900 mb-0.5">
                   {serviceName}
                 </h3>
-                <p className="text-sm text-slate-500">{provider}</p>
+                <p className="text-sm text-slate-500 capitalize">{provider}</p>
               </div>
             </div>
 
@@ -193,7 +193,7 @@ const Card = ({ subscription }) => {
             {paymentMethodId && (
               <div className="flex items-center justify-between">
                 <span className="text-slate-600">Payment Method</span>
-                <span className="font-medium text-slate-900">
+                <span className="font-medium text-slate-900 capitalize">
                   {paymentMethodName}
                 </span>
               </div>
@@ -297,7 +297,7 @@ const Card = ({ subscription }) => {
       <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)}>
         <div className="p-6">
           <h2 className="text-2xl font-bold text-slate-900 mb-6">Edit Subscription</h2>
-          <EditTransactionForm 
+          <EditSubscriptionForm 
             subscription={subscription}
             onSuccess={() => setShowEditModal(false)}
             onCancel={() => setShowEditModal(false)}

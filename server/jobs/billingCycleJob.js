@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import Subscription from "../models/subscription.model.js";
 import Transaction from "../models/transaction.model.js";
+import User from "../models/user.model.js";
 
 // Helper function to calculate next billing date
 function calculateNextBillingDate(currentDate, billingCycle) {
@@ -40,6 +41,14 @@ export const billingCycleJob = cron.schedule("0 0 * * *", async () => {
     
     for (const subscription of dueSubscriptions) {
       try {
+        // Get payment method name if paymentMethodId exists
+        let paymentMethodName = null;
+        if (subscription.paymentMethodId) {
+          const user = await User.findById(subscription.userId);
+          const paymentMethod = user?.paymentMethods.find(pm => pm.id === subscription.paymentMethodId);
+          paymentMethodName = paymentMethod?.name || null;
+        }
+        
         // Create a new transaction for this billing cycle
         const newTransaction = new Transaction({
           userId: subscription.userId,
@@ -51,6 +60,7 @@ export const billingCycleJob = cron.schedule("0 0 * * *", async () => {
           billingCycle: subscription.billingCycle,
           billingDate: subscription.nextBillingDate,
           paymentMethodId: subscription.paymentMethodId,
+          paymentMethodName: paymentMethodName,
         });
         
         await newTransaction.save();

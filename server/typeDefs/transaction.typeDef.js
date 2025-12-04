@@ -10,6 +10,7 @@ const transactionTypeDef = `#graphql
         billingCycle: String!
         billingDate: String!
         paymentMethodId: String
+        paymentMethodName: String
         createdAt: String!
         updatedAt: String!
     }

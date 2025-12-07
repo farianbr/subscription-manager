@@ -57,6 +57,8 @@ const HomePage = () => {
       // Get all transactions from history
       const allTransactions = historyData.monthlyHistory.flatMap(month => month.transactions);
       
+      if (allTransactions.length === 0) return;
+      
       // Group by category
       const categoryMap = {};
       allTransactions.forEach((transaction) => {
@@ -82,17 +84,21 @@ const HomePage = () => {
         categoryColors[cat.toLowerCase()] || "rgba(150, 150, 150)"
       );
 
-      setChartData((prev) => ({
+      setChartData({
         labels: categories,
         datasets: [
           {
-            ...prev.datasets[0],
+            label: "$",
             data: totalAmounts,
             backgroundColor: colors,
             borderColor: colors,
+            borderWidth: 1,
+            borderRadius: 30,
+            spacing: 10,
+            cutout: 120,
           },
         ],
-      }));
+      });
     }
   }, [historyData, convertFromUSD]);
 
@@ -101,6 +107,8 @@ const HomePage = () => {
     if (historyData?.monthlyHistory && historyData.monthlyHistory.length > 0) {
       // Get all transactions from history
       const allTransactions = historyData.monthlyHistory.flatMap(month => month.transactions);
+      
+      if (allTransactions.length === 0) return;
       
       // Group transactions by provider
       const providerMap = {};

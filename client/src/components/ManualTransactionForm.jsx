@@ -1,18 +1,17 @@
-import { CREATE_SUBSCRIPTION } from "../graphql/mutations/subscription.mutation";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
+import { CREATE_TRANSACTION } from "../graphql/mutations/transaction.mutation";
 import { ADD_PAYMENT_METHOD } from "../graphql/mutations/user.mutation";
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { getCompanyOptions } from "../lib/companyLogos";
 import { useCurrency } from "../context/CurrencyContext";
 
-const TransactionForm = ({ onSuccess }) => {
+const ManualTransactionForm = ({ onSuccess }) => {
   const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
   const { convertToUSD, rates } = useCurrency();
-  const [createSubscription, { loading }] = useMutation(CREATE_SUBSCRIPTION, {
-    refetchQueries: ["GetSubscriptions", "GetMonthlyHistory"],
+  const [createTransaction, { loading }] = useMutation(CREATE_TRANSACTION, {
+    refetchQueries: ["GetMonthlyHistory"],
   });
   const [addPaymentMethod, { loading: addingPayment }] = useMutation(ADD_PAYMENT_METHOD);
 
@@ -87,52 +86,44 @@ const TransactionForm = ({ onSuccess }) => {
     const form = e.target;
     const formData = new FormData(form);
     
-    // Get provider and service name
     const companyKey = formData.get("company");
     const provider = companyKey === "other" ? formData.get("customName") : companyKey;
     const serviceName = formData.get("serviceName") || provider;
-    
-    // Get start date from form
-    const startDate = formData.get("startDate");
     
     // Convert amount to USD
     const amountInSelectedCurrency = parseFloat(formData.get("amount") || "0");
     const costInUSD = convertToUSD(amountInSelectedCurrency, selectedCurrency);
     
-    const subscriptionData = {
+    const transactionData = {
       serviceName: serviceName,
       provider: provider,
       category: formData.get("category"),
       costInDollar: costInUSD,
-      startDate: startDate,
-      alertEnabled: formData.get("alertEnabled") === "on",
       billingCycle: formData.get("billingCycle") || "monthly",
+      billingDate: formData.get("billingDate"),
       paymentMethodId: selectedPaymentMethod || null,
     };
     
     try {
-      await createSubscription({ variables: { input: subscriptionData } });
-
+      await createTransaction({ variables: { input: transactionData } });
       form.reset();
       setSelectedCompany("google");
       setCustomCompanyName("");
-      toast.success("Subscription created successfully");
+      toast.success("Transaction added successfully");
       
-      // Call onSuccess callback if provided (for modal)
       if (onSuccess) {
         onSuccess();
       }
-    } catch (err) {
-      console.error(err);
-      toast.error(err.message);
+    } catch (error) {
+      toast.error(error.message);
     }
   };
 
   return (
-    <div className="relative">
-      <form className="space-y-5" onSubmit={handleSubmit}>
+    <div className="w-full">
+      <form onSubmit={handleSubmit} className="space-y-6">
         
-        {/* Company/Provider Selector */}
+        {/* Provider Selection */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="company">
             Select Provider
@@ -143,47 +134,66 @@ const TransactionForm = ({ onSuccess }) => {
             name="company"
             value={selectedCompany}
             onChange={(e) => setSelectedCompany(e.target.value)}
-            required
           >
             {companyOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
             ))}
+            <option value="other">Other</option>
           </select>
         </div>
 
-        {/* Custom Provider Name (shown when "Other" is selected) */}
+        {/* Custom Provider Name */}
         {selectedCompany === "other" && (
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="customName">
               Provider Name
             </label>
             <input
-              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              id="customName"
-              name="customName"
               type="text"
+              name="customName"
+              id="customName"
               value={customCompanyName}
               onChange={(e) => setCustomCompanyName(e.target.value)}
-              placeholder="e.g., Custom Subscription Service"
-              required
+              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              placeholder="Enter service name"
+              required={selectedCompany === "other"}
             />
           </div>
         )}
 
         {/* Service Name */}
+        
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="serviceName">
+              Service Name <span className="text-slate-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="text"
+              name="serviceName"
+              id="serviceName"
+              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              placeholder="e.g., Premium Plan, Family Plan"
+            />
+          </div>
+       
+
+        {/* Category */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="serviceName">
-            Service Name (Optional)
+          <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="category">
+            Category
           </label>
-          <input
-            className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-            id="serviceName"
-            name="serviceName"
-            type="text"
-            placeholder="e.g., Netflix Premium, Spotify Family"
-          />
+          <select
+            className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            id="category"
+            name="category"
+          >
+            <option value="entertainment">Entertainment</option>
+            <option value="productivity">Productivity</option>
+            <option value="utilities">Utilities</option>
+            <option value="education">Education</option>
+          </select>
         </div>
 
         {/* Cost with Currency Selection */}
@@ -208,55 +218,38 @@ const TransactionForm = ({ onSuccess }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="amount">
-              Cost
+              Amount
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">{getCurrencySymbolFor(selectedCurrency)}</span>
               <input
-                className="w-full pl-7 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                id="amount"
-                name="amount"
                 type="number"
+                name="amount"
+                id="amount"
                 step="0.01"
-                placeholder="9.99"
+                min="0"
+                className="w-full pl-7 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 required
+                placeholder="9.99"
               />
             </div>
           </div>
         </div>
 
-        {/* Category & Billing Cycle */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="category">
-              Category
-            </label>
-            <select
-              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              id="category"
-              name="category"
-            >
-              <option value="entertainment">Entertainment</option>
-              <option value="productivity">Productivity</option>
-              <option value="utilities">Utilities</option>
-              <option value="education">Education</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="billingCycle">
-              Billing Cycle
-            </label>
-            <select
-              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              id="billingCycle"
-              name="billingCycle"
-            >
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-              <option value="weekly">Weekly</option>
-            </select>
-          </div>
+        {/* Billing Cycle */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="billingCycle">
+            Billing Cycle
+          </label>
+          <select
+            className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            id="billingCycle"
+            name="billingCycle"
+          >
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+            <option value="weekly">Weekly</option>
+          </select>
         </div>
 
         {/* Payment Method Section */}
@@ -282,7 +275,7 @@ const TransactionForm = ({ onSuccess }) => {
                 onChange={(e) => setPaymentData({ ...paymentData, name: e.target.value })}
                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm"
                 placeholder="e.g., Visa Card"
-                required
+                required={showPaymentForm}
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -331,7 +324,7 @@ const TransactionForm = ({ onSuccess }) => {
               name="paymentMethodId"
               value={selectedPaymentMethod}
               onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-              required
+              required={!showPaymentForm}
             >
               {userData?.authUser?.paymentMethods?.map((method) => (
                 <option key={method.id} value={method.id}>
@@ -349,33 +342,20 @@ const TransactionForm = ({ onSuccess }) => {
           </div>
         )}
 
-        {/* Start Date - Always visible */}
+        {/* Billing Date */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="startDate">
-            Start Date
+          <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="billingDate">
+            Billing Date
           </label>
           <input
             type="date"
-            name="startDate"
-            id="startDate"
+            name="billingDate"
+            id="billingDate"
             max={new Date().toISOString().split('T')[0]}
             defaultValue={new Date().toISOString().split('T')[0]}
             className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             required
           />
-        </div>
-
-        {/* Alert Checkbox */}
-        <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg border border-blue-100">
-          <input
-            type="checkbox"
-            id="alertEnabled"
-            name="alertEnabled"
-            className="mt-0.5 w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
-          />
-          <label htmlFor="alertEnabled" className="text-sm text-slate-700">
-            Send me a reminder 1 day before renewal
-          </label>
         </div>
 
         {/* Submit Button */}
@@ -384,11 +364,11 @@ const TransactionForm = ({ onSuccess }) => {
           type="submit"
           disabled={loading}
         >
-          {loading ? "Adding..." : "Add Subscription"}
+          {loading ? "Adding..." : "Add Transaction"}
         </button>
       </form>
     </div>
   );
 };
 
-export default TransactionForm;
+export default ManualTransactionForm;

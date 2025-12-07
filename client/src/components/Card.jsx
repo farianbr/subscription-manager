@@ -49,14 +49,14 @@ const Card = ({ subscription }) => {
   const [deleteSubscription, { loading: deleteLoading }] = useMutation(
     DELETE_SUBSCRIPTION,
     {
-      refetchQueries: ["GetSubscriptions"],
+      refetchQueries: ["GetSubscriptions", "GetMonthlyHistory"],
     }
   );
 
   const [updateSubscription, { loading: updateLoading }] = useMutation(
     UPDATE_SUBSCRIPTION,
     {
-      refetchQueries: ["GetSubscriptions"],
+      refetchQueries: ["GetSubscriptions", "GetMonthlyHistory"],
     }
   );
 

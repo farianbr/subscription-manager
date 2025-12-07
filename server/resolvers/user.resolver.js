@@ -171,16 +171,19 @@ const userResolver = {
 
         const { name, type, last4, isDefault } = input;
         
+        // If this is the first payment method, make it default
+        const shouldBeDefault = isDefault || user.paymentMethods.length === 0;
+        
         const newPaymentMethod = {
           id: crypto.randomBytes(16).toString("hex"),
           name,
           type,
           last4,
-          isDefault: isDefault || false,
+          isDefault: shouldBeDefault,
         };
 
         // If this is set as default, unset other defaults
-        if (isDefault) {
+        if (shouldBeDefault) {
           user.paymentMethods.forEach(pm => pm.isDefault = false);
         }
 

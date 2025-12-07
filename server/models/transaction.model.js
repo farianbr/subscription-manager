@@ -9,7 +9,7 @@ const transactionSchema = new mongoose.Schema({
   subscriptionId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Subscription",
-    required: true,
+    required: false,
   },
   serviceName: {
     type: String,

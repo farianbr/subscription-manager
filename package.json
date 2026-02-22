@@ -14,7 +14,7 @@
   "author": "Farian Bin Rahman",
   "license": "ISC",
   "dependencies": {
-    "@apollo/server": "^5.0.0",
+    "@apollo/server": "^5.4.0",
     "@as-integrations/express5": "^1.1.2",
     "@graphql-tools/merge": "^9.1.1",
     "bcryptjs": "^3.0.2",

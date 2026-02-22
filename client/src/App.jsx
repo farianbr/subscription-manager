@@ -5,6 +5,8 @@ import SignUpPage from "./pages/SignUpPage";
 import SettingsPage from "./pages/SettingsPage";
 import HistoryPage from "./pages/HistoryPage";
 import NotFound from "./pages/NotFound";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import Header from "./components/ui/Header";
 import ScrollToTop from "./components/ui/ScrollToTop";
 import { useQuery } from "@apollo/client/react";
@@ -56,6 +58,8 @@ function App() {
             data.authUser ? <HistoryPage /> : <Navigate to="/login" />
           }
         />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />

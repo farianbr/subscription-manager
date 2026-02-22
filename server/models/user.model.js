@@ -28,6 +28,12 @@ const userSchema = new mongoose.Schema(
       default: "USD",
       enum: ["USD", "EUR", "GBP", "INR", "BDT", "CAD", "AUD"],
     },
+    resetPasswordToken: {
+      type: String,
+    },
+    resetPasswordExpires: {
+      type: Date,
+    },
     paymentMethods: [
       {
         id: String,

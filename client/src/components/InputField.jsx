@@ -1,4 +1,4 @@
-const InputField = ({ label, id, name, type, onChange, value }) => {
+const InputField = ({ label, id, name, type, onChange, value, placeholder }) => {
 
   if(!type){
     type = "text"
@@ -16,6 +16,7 @@ const InputField = ({ label, id, name, type, onChange, value }) => {
         name={name}
         value={value}
         onChange={onChange}
+        placeholder={placeholder}
         required
       />
     </div>

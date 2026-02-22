@@ -5,12 +5,24 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { getCompanyOptions } from "../lib/companyLogos";
+import { useCurrency } from "../context/CurrencyContext";
 
 const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
   const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
+  const { rates, convertToUSD } = useCurrency();
   const [updateSubscription, { loading }] = useMutation(UPDATE_SUBSCRIPTION, {
     refetchQueries: ["GetSubscriptions"],
   });
+
+  // Helper to get currency symbol
+  const getCurrencySymbolFor = (curr) => {
+    const currencySymbols = {
+      USD: "$", EUR: "€", GBP: "£", JPY: "¥",
+      AUD: "A$", CAD: "C$", CHF: "Fr", CNY: "¥",
+      INR: "₹", BDT: "৳",
+    };
+    return currencySymbols[curr] || curr;
+  };
 
   // Form state
   const [selectedCompany, setSelectedCompany] = useState("google");
@@ -22,6 +34,7 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
   const [paymentMethodId, setPaymentMethodId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [alertEnabled, setAlertEnabled] = useState(false);
+  const [currency, setCurrency] = useState("USD");
   const [initialized, setInitialized] = useState(false);
   
   const companyOptions = getCompanyOptions();
@@ -44,11 +57,17 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
 
       // Set other fields
       setServiceNameInput(subscription.serviceName || "");
-      setCostInDollar(subscription.costInDollar?.toString() || "");
+      const savedCurrency = subscription.currency || "USD";
+      // Convert stored USD value to the subscription's currency for display
+      const usdCost = subscription.costInDollar || 0;
+      const rateForCurrency = rates[savedCurrency] || 1;
+      const displayCost = usdCost * rateForCurrency;
+      setCostInDollar(parseFloat(displayCost.toFixed(2)).toString());
       setCategory(subscription.category || "entertainment");
       setBillingCycle(subscription.billingCycle || "monthly");
       setPaymentMethodId(subscription.paymentMethodId || "");
       setAlertEnabled(subscription.alertEnabled || false);
+      setCurrency(savedCurrency);
       
       // Format date for input field
       if (subscription.startDate) {
@@ -69,12 +88,16 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
     const provider = selectedCompany === "other" ? customCompanyName : selectedCompany;
     const serviceName = serviceNameInput || provider;
     
+    // Convert the displayed cost (in selected currency) back to USD for storage
+    const costInUSD = convertToUSD(parseFloat(costInDollar), currency);
+
     const subscriptionData = {
       subscriptionId: subscription._id,
       serviceName: serviceName,
       provider: provider,
       category: category,
-      costInDollar: parseFloat(costInDollar),
+      costInDollar: costInUSD,
+      currency: currency,
       startDate: startDate,
       alertEnabled: alertEnabled,
       billingCycle: billingCycle,
@@ -101,7 +124,7 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
   return (
     <div className="relative">
       <form className="space-y-5" onSubmit={handleSubmit}>
-        
+
         {/* Company/Provider Selector */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="company">
@@ -123,26 +146,26 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
           </select>
         </div>
 
-        {/* Custom Company Name (if "other" is selected) */}
+        {/* Custom Provider Name (shown when "Other" is selected) */}
         {selectedCompany === "other" && (
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="customName">
-              Company Name
+              Provider Name
             </label>
             <input
               className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               id="customName"
               name="customName"
               type="text"
-              placeholder="Enter company name"
               value={customCompanyName}
               onChange={(e) => setCustomCompanyName(e.target.value)}
+              placeholder="e.g., Custom Subscription Service"
               required
             />
           </div>
         )}
 
-        {/* Service Name (Optional) */}
+        {/* Service Name */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="serviceName">
             Service Name (Optional)
@@ -152,22 +175,40 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
             id="serviceName"
             name="serviceName"
             type="text"
-            placeholder="e.g., Premium, Pro, Business"
+            placeholder="e.g., Netflix Premium, Spotify Family"
             value={serviceNameInput}
             onChange={(e) => setServiceNameInput(e.target.value)}
           />
         </div>
 
-        {/* Amount and Category */}
+        {/* Currency | Cost */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="currency">
+              Currency
+            </label>
+            <select
+              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              id="currency"
+              name="currency"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+            >
+              {Object.keys(rates).map((curr) => (
+                <option key={curr} value={curr}>{curr}</option>
+              ))}
+            </select>
+          </div>
+          <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="amount">
-              Cost ($)
+              Cost
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium text-sm">
+                {getCurrencySymbolFor(currency)}
+              </span>
               <input
-                className="w-full pl-7 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className={`w-full pr-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${getCurrencySymbolFor(currency).length > 1 ? "pl-10" : "pl-7"}`}
                 id="amount"
                 name="amount"
                 type="number"
@@ -179,7 +220,10 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
               />
             </div>
           </div>
+        </div>
 
+        {/* Category | Billing Cycle */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="category">
               Category
@@ -198,10 +242,6 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
               <option value="education">Education</option>
             </select>
           </div>
-        </div>
-
-        {/* Billing Cycle and Payment Method */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="billingCycle">
               Billing Cycle
@@ -218,32 +258,44 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
               <option value="weekly">Weekly</option>
             </select>
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="paymentMethodId">
-              Payment Method
-            </label>
-            <select
-              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              id="paymentMethodId"
-              name="paymentMethodId"
-              value={paymentMethodId}
-              onChange={(e) => setPaymentMethodId(e.target.value)}
-              required
+        {/* Payment Method */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="paymentMethodId">
+            Payment Method
+          </label>
+          <select
+            className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            id="paymentMethodId"
+            name="paymentMethodId"
+            value={paymentMethodId}
+            onChange={(e) => setPaymentMethodId(e.target.value)}
+            required
+          >
+            <option value="">Select Payment Method</option>
+            {userData?.authUser?.paymentMethods?.map((method) => (
+              <option key={method.id} value={method.id}>
+                {method.name} {method.last4 && `(•••• ${method.last4})`}{method.isDefault ? " ★" : ""}
+              </option>
+            ))}
+          </select>
+          {(!userData?.authUser?.paymentMethods || userData.authUser.paymentMethods.length === 0) ? (
+            <p className="text-xs text-slate-500 mt-1">
+              Add payment methods in{" "}
+              <Link to="/settings" state={{ tab: "payments" }} className="text-blue-600 hover:underline">
+                Settings
+              </Link>
+            </p>
+          ) : (
+            <Link
+              to="/settings"
+              state={{ tab: "payments" }}
+              className="text-xs text-blue-600 hover:underline mt-1 inline-block"
             >
-              <option value="">Select Payment Method</option>
-              {userData?.authUser?.paymentMethods?.map((method) => (
-                <option key={method.id} value={method.id}>
-                  {method.name} {method.last4 && `(•••• ${method.last4})${method.isDefault ? "*" : ""}`} 
-                </option>
-              ))}
-            </select>
-            {(!userData?.authUser?.paymentMethods || userData.authUser.paymentMethods.length === 0) && (
-              <p className="text-xs text-slate-500 mt-1">
-                Add payment methods in <Link to="/settings" state={{ tab: "payments" }} className="text-blue-600 hover:underline">Settings</Link>
-              </p>
-            )}
-          </div>
+              + Manage payment methods
+            </Link>
+          )}
         </div>
 
         {/* Start Date */}
@@ -264,17 +316,17 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
         </div>
 
         {/* Alert Checkbox */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg border border-blue-100">
           <input
             type="checkbox"
             name="alertEnabled"
             id="alertEnabled"
             checked={alertEnabled}
             onChange={(e) => setAlertEnabled(e.target.checked)}
-            className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+            className="mt-0.5 w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
           />
           <label htmlFor="alertEnabled" className="text-sm text-slate-700">
-            Enable renewal reminders
+            Send me a reminder 1 day before renewal
           </label>
         </div>
 
@@ -289,7 +341,7 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
             Cancel
           </button>
           <button
-            className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2.5 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             type="submit"
             disabled={loading}
           >

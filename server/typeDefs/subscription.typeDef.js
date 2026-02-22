@@ -9,6 +9,7 @@ const subscriptionTypeDef = `#graphql
         billingCycle: String!
         startDate: String!
         nextBillingDate: String!
+        currency: String
         paymentMethodId: String
         alertEnabled: Boolean!
         alertSentForCurrentCycle: Boolean!
@@ -31,6 +32,7 @@ const subscriptionTypeDef = `#graphql
         provider: String!
         category: String!
         costInDollar: Float!
+        currency: String
         billingCycle: String!
         startDate: String!
         paymentMethodId: String
@@ -43,6 +45,7 @@ const subscriptionTypeDef = `#graphql
         provider: String
         category: String
         costInDollar: Float
+        currency: String
         billingCycle: String
         startDate: String
         paymentMethodId: String

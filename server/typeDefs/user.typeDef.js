@@ -33,6 +33,8 @@ const userTypeDef = `#graphql
         addPaymentMethod(input: PaymentMethodInput!): User
         removePaymentMethod(paymentMethodId: String!): User
         setDefaultPaymentMethod(paymentMethodId: String!): User
+        forgotPassword(email: String!): MessageResponse!
+        resetPassword(token: String!, newPassword: String!): MessageResponse!
     }
 
     input SignUpInput {
@@ -66,6 +68,10 @@ const userTypeDef = `#graphql
     }
 
     type LogoutResponse{
+        message: String!
+    }
+
+    type MessageResponse {
         message: String!
     }
 

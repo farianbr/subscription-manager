@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { sendMail } from "../utils/mailer.js";
 
 const userResolver = {
   Query: {
@@ -227,6 +228,79 @@ const userResolver = {
         return user;
       } catch (err) {
         console.error("Error in setDefaultPaymentMethod:", err);
+        throw new Error(err.message || "Internal server error");
+      }
+    },
+
+    forgotPassword: async (_, { email }) => {
+      try {
+        const user = await User.findOne({ email });
+        if (!user) {
+          // Don't reveal whether a user exists
+          return { message: "If that email is registered, a reset link has been sent." };
+        }
+
+        // Generate a secure random token
+        const token = crypto.randomBytes(32).toString("hex");
+        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+        // Store hashed token with 1-hour expiry
+        user.resetPasswordToken = hashedToken;
+        user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+        await user.save();
+
+        // Build reset URL
+        const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+        const resetUrl = `${clientUrl}/reset-password/${token}`;
+
+        await sendMail({
+          to: user.email,
+          subject: "Password Reset Request",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #1e40af;">Reset Your Password</h2>
+              <p>Hi ${user.name},</p>
+              <p>You requested a password reset. Click the button below to reset your password. This link expires in <strong>1 hour</strong>.</p>
+              <a href="${resetUrl}" style="display:inline-block;margin:16px 0;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">Reset Password</a>
+              <p>If you didn't request this, you can safely ignore this email.</p>
+              <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"/>
+              <p style="color:#64748b;font-size:12px;">Subscription Manager &mdash; this link expires in 1 hour.</p>
+            </div>
+          `,
+          text: `Reset your password: ${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, ignore this email.`,
+        });
+
+        return { message: "If that email is registered, a reset link has been sent." };
+      } catch (err) {
+        console.error("Error in forgotPassword:", err);
+        throw new Error(err.message || "Internal server error");
+      }
+    },
+
+    resetPassword: async (_, { token, newPassword }) => {
+      try {
+        if (!newPassword || newPassword.length < 6) {
+          throw new Error("Password must be at least 6 characters");
+        }
+
+        // Hash the incoming token to compare with the stored hash
+        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+        const user = await User.findOne({
+          resetPasswordToken: hashedToken,
+          resetPasswordExpires: { $gt: new Date() },
+        });
+
+        if (!user) throw new Error("Reset token is invalid or has expired");
+
+        user.password = await bcrypt.hash(newPassword, 10);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        return { message: "Password has been reset successfully. You can now log in." };
+      } catch (err) {
+        console.error("Error in resetPassword:", err);
         throw new Error(err.message || "Internal server error");
       }
     },

@@ -36,6 +36,11 @@ const subscriptionSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
+  currency: {
+    type: String,
+    default: "USD",
+    enum: ["USD", "EUR", "GBP", "INR", "BDT", "CAD", "AUD"],
+  },
   paymentMethodId: {
     type: String,
   },

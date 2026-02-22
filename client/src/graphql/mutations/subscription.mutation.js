@@ -8,6 +8,7 @@ export const CREATE_SUBSCRIPTION = gql`
       provider
       category
       costInDollar
+      currency
       billingCycle
       startDate
       nextBillingDate
@@ -25,6 +26,7 @@ export const UPDATE_SUBSCRIPTION = gql`
       provider
       category
       costInDollar
+      currency
       billingCycle
       startDate
       nextBillingDate

@@ -79,7 +79,7 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
       
       setInitialized(true);
     }
-  }, [subscription, initialized, companyOptions]);
+  }, [subscription, initialized, companyOptions, rates]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

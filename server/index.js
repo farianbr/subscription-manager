@@ -19,7 +19,6 @@ import { connectDB } from "./db/connectDB.js";
 import { configurePassport } from "./passport/passport.config.js";
 import { scheduleDailyReminders } from "./jobs/reminderJob.js";
 import { startBillingCycleJob } from "./jobs/billingCycleJob.js";
-import User from "./models/user.model.js";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import { ApolloServerPluginLandingPageDisabled } from "@apollo/server/plugin/disabled";
 import callServer from "./jobs/callServer.js";

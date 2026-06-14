@@ -14,10 +14,17 @@ const userResolver = {
         throw new Error("Internal server error");
       }
     },
-    user: async (_, { userId }) => {
+    user: async (_, { userId }, context) => {
       try {
-        const user = await User.findById(userId);
-        return user;
+        const authedUser = await context.getUser();
+        if (!authedUser) throw new Error("Unauthorized");
+
+        // Users may only fetch their own record
+        if (authedUser._id.toString() !== userId) {
+          throw new Error("Unauthorized");
+        }
+
+        return await User.findById(userId);
       } catch (err) {
         console.error("Error in user query:", err);
         throw new Error(err.message || "Error getting user");

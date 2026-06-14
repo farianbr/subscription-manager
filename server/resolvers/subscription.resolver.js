@@ -86,15 +86,22 @@ const subscriptionResolver = {
     },
     updateSubscription: async (_, { input }, context) => {
       try {
-        if (!context.getUser()) throw new Error("Unauthorized");
-        
+        const user = await context.getUser();
+        if (!user) throw new Error("Unauthorized");
+
+        // Verify the subscription exists and belongs to the caller
+        const subscription = await Subscription.findById(input.subscriptionId);
+        if (!subscription) throw new Error("Subscription not found");
+        if (subscription.userId.toString() !== user._id.toString()) {
+          throw new Error("Unauthorized to update this subscription");
+        }
+
         // If startDate is being updated, recalculate nextBillingDate
         if (input.startDate) {
-          const subscription = await Subscription.findById(input.subscriptionId);
           const billingCycle = input.billingCycle || subscription.billingCycle;
           input.nextBillingDate = calculateNextBillingDate(new Date(input.startDate), billingCycle);
         }
-        
+
         const updatedSubscription = await Subscription.findByIdAndUpdate(
           input.subscriptionId,
           { $set: input },
@@ -103,24 +110,32 @@ const subscriptionResolver = {
         return updatedSubscription;
       } catch (err) {
         console.error("Error updating subscription:", err);
-        throw new Error("Error updating subscription");
+        throw new Error(err.message || "Error updating subscription");
       }
     },
     deleteSubscription: async (_, { subscriptionId }, context) => {
       try {
-        if (!context.getUser()) throw new Error("Unauthorized");
-        
+        const user = await context.getUser();
+        if (!user) throw new Error("Unauthorized");
+
+        // Verify the subscription exists and belongs to the caller
+        const subscription = await Subscription.findById(subscriptionId);
+        if (!subscription) throw new Error("Subscription not found");
+        if (subscription.userId.toString() !== user._id.toString()) {
+          throw new Error("Unauthorized to delete this subscription");
+        }
+
         const deletedSubscription = await Subscription.findByIdAndDelete(
           subscriptionId
         );
-        
+
         // Optionally delete associated transactions
         // await Transaction.deleteMany({ subscriptionId });
-        
+
         return deletedSubscription;
       } catch (err) {
         console.error("Error deleting subscription:", err);
-        throw new Error("Error deleting subscription");
+        throw new Error(err.message || "Error deleting subscription");
       }
     },
   },

@@ -35,6 +35,11 @@ configurePassport();
 const app = express();
 const httpServer = http.createServer(app);
 
+const isProduction = process.env.NODE_ENV === "production";
+
+// Behind a proxy (Render/Heroku/etc.) so secure cookies work over forwarded HTTPS
+if (isProduction) app.set("trust proxy", 1);
+
 const __dirname = path.resolve();
 
 const MongoDBStore = ConnectMongo(session);
@@ -54,6 +59,8 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7,
       httpOnly: true,
+      secure: isProduction, // HTTPS-only in production
+      sameSite: isProduction ? "strict" : "lax",
     },
     store: store,
   })
@@ -67,11 +74,11 @@ const server = new ApolloServer({
   resolvers: mergedResolvers,
   plugins: [
     ApolloServerPluginDrainHttpServer({ httpServer }),
-    ...(process.env.NODE_ENV === "production"
+    ...(isProduction
       ? [ApolloServerPluginLandingPageDisabled()]
       : [ApolloServerPluginLandingPageLocalDefault()]),
   ],
-  introspection: process.env.NODE_ENV !== "production", // disable schema introspection in prod
+  introspection: !isProduction, // disable schema introspection in prod
 });
 
 await server.start();
@@ -88,7 +95,7 @@ app.use(
   })
 );
 
-if (process.env.NODE_ENV === "production") {
+if (isProduction) {
   app.get("/graphql", (req, res) => {
     res.status(403).send("GraphQL GUI is disabled in production");
   });

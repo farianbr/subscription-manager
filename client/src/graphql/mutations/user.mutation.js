@@ -142,6 +142,43 @@ export const SET_DEFAULT_PAYMENT_METHOD = gql`
   }
 `;
 
+export const VERIFY_EMAIL = gql`
+  mutation VerifyEmail($token: String!) {
+    verifyEmail(token: $token) {
+      message
+    }
+  }
+`;
+
+export const RESEND_VERIFICATION = gql`
+  mutation ResendVerificationEmail {
+    resendVerificationEmail {
+      message
+    }
+  }
+`;
+
+export const UPDATE_NOTIFICATION_PREFERENCES = gql`
+  mutation UpdateNotificationPreferences($input: NotificationPreferencesInput!) {
+    updateNotificationPreferences(input: $input) {
+      _id
+      notificationPreferences {
+        emailReminders
+        reminderDaysBefore
+        productUpdates
+      }
+    }
+  }
+`;
+
+export const DELETE_ACCOUNT = gql`
+  mutation DeleteAccount($password: String!) {
+    deleteAccount(password: $password) {
+      message
+    }
+  }
+`;
+
 export const FORGOT_PASSWORD = gql`
   mutation ForgotPassword($email: String!) {
     forgotPassword(email: $email) {

@@ -3,6 +3,7 @@ import Transaction from "../models/transaction.model.js";
 import User from "../models/user.model.js";
 import { calculateNextBillingDate } from "../utils/billing.js";
 import { toUSD } from "../utils/exchangeRates.js";
+import { assertWithinSubscriptionLimit } from "../utils/planGuard.js";
 import {
   requireString,
   requireEnum,
@@ -58,6 +59,10 @@ const subscriptionResolver = {
       try {
         const user = await context.getUser();
         if (!user) throw new Error("Unauthorized");
+
+        // Enforce the plan's subscription cap (free tier = 10).
+        const currentCount = await Subscription.countDocuments({ userId: user._id });
+        assertWithinSubscriptionLimit(user, currentCount);
 
         const clean = validateSubscriptionInput(input);
         const currency = clean.currency || user.currency || "USD";

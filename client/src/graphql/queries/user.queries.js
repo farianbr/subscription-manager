@@ -8,6 +8,13 @@ export const GET_AUTHENTICATED_USER = gql`
       email
       profilePicture
       currency
+      plan
+      emailVerified
+      notificationPreferences {
+        emailReminders
+        reminderDaysBefore
+        productUpdates
+      }
       paymentMethods {
         id
         name

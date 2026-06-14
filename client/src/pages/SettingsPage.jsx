@@ -13,6 +13,9 @@ import {
 import toast from "react-hot-toast";
 import { useCurrency } from "../context/CurrencyContext";
 import Modal from "../components/ui/Modal";
+import PlanSettings from "../components/PlanSettings";
+import NotificationSettings from "../components/NotificationSettings";
+import DangerZone from "../components/DangerZone";
 import { uploadImageToImgBB } from "../lib/imageUpload";
 
 const SettingsPage = () => {
@@ -61,7 +64,7 @@ const SettingsPage = () => {
     // Then check URL parameter
     const tab = new URLSearchParams(window.location.search).get("tab");
     if (tab === "payment") return "payments"; // Support singular form
-    if (tab && ["profile", "security", "payments"].includes(tab)) return tab;
+    if (tab && ["profile", "security", "payments", "plan", "notifications"].includes(tab)) return tab;
     return "profile"; // Default tab
   });
   const [settingDefaultId, setSettingDefaultId] = useState(null);
@@ -97,7 +100,7 @@ const SettingsPage = () => {
     // Support both 'payment' and 'payments' for backwards compatibility
     if (tab === "payment") {
       setActiveTab("payments");
-    } else if (["profile", "security", "payments"].includes(tab)) {
+    } else if (["profile", "security", "payments", "plan", "notifications"].includes(tab)) {
       setActiveTab(tab);
     }
   }, [location.state, searchParams]);
@@ -300,6 +303,26 @@ const SettingsPage = () => {
                 }`}
               >
                 Payment Methods
+              </button>
+              <button
+                onClick={() => setActiveTab("plan")}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === "plan"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                }`}
+              >
+                Plan
+              </button>
+              <button
+                onClick={() => setActiveTab("notifications")}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === "notifications"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                }`}
+              >
+                Notifications
               </button>
             </nav>
           </div>
@@ -509,6 +532,8 @@ const SettingsPage = () => {
                   {passwordLoading ? "Updating..." : "Update Password"}
                 </button>
               </form>
+
+              <DangerZone />
               </div>
             )}
 
@@ -656,6 +681,12 @@ const SettingsPage = () => {
                 </div>
               </div>
             )}
+
+            {/* Plan Tab */}
+            {activeTab === "plan" && <PlanSettings />}
+
+            {/* Notifications Tab */}
+            {activeTab === "notifications" && <NotificationSettings />}
           </div>
         </div>
       </div>

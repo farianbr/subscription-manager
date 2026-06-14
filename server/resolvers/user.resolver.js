@@ -1,7 +1,11 @@
 import User from "../models/user.model.js";
+import Subscription from "../models/subscription.model.js";
+import Transaction from "../models/transaction.model.js";
+import Notification from "../models/notification.model.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { sendMail } from "../utils/mailer.js";
+import { sendVerificationEmail } from "../utils/emails.js";
 import {
   requireString,
   requireEmail,
@@ -9,6 +13,21 @@ import {
   requireEnum,
   GENDERS,
 } from "../utils/validators.js";
+
+// Create a verification token (raw for the link, hashed for storage) and email it.
+async function issueEmailVerification(user) {
+  const token = crypto.randomBytes(32).toString("hex");
+  user.emailVerificationToken = crypto.createHash("sha256").update(token).digest("hex");
+  user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+  await user.save();
+
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+  await sendVerificationEmail({
+    to: user.email,
+    name: user.name,
+    verifyUrl: `${clientUrl}/verify-email/${token}`,
+  });
+}
 
 const userResolver = {
   Query: {
@@ -63,6 +82,13 @@ const userResolver = {
         });
 
         await newUser.save();
+
+        // Send an email verification link (best-effort; never blocks signup).
+        try {
+          await issueEmailVerification(newUser);
+        } catch (mailErr) {
+          console.error("Failed to send verification email:", mailErr.message);
+        }
 
         // Automatically log in the user after signup
         await context.login(newUser);
@@ -294,9 +320,7 @@ const userResolver = {
 
     resetPassword: async (_, { token, newPassword }) => {
       try {
-        if (!newPassword || newPassword.length < 6) {
-          throw new Error("Password must be at least 6 characters");
-        }
+        requirePassword(newPassword);
 
         // Hash the incoming token to compare with the stored hash
         const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
@@ -316,6 +340,104 @@ const userResolver = {
         return { message: "Password has been reset successfully. You can now log in." };
       } catch (err) {
         console.error("Error in resetPassword:", err);
+        throw new Error(err.message || "Internal server error");
+      }
+    },
+
+    verifyEmail: async (_, { token }) => {
+      try {
+        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+        // Idempotent: the token stays valid until it expires, so a repeated click
+        // (React's double-effect, a link opened on another device, or an email
+        // scanner) re-verifies harmlessly instead of failing on the second hit.
+        const user = await User.findOne({
+          emailVerificationToken: hashedToken,
+          emailVerificationExpires: { $gt: new Date() },
+        });
+
+        if (!user) throw new Error("Verification link is invalid or has expired");
+
+        if (!user.emailVerified) {
+          user.emailVerified = true;
+          await user.save();
+        }
+
+        return { message: "Email verified successfully." };
+      } catch (err) {
+        console.error("Error in verifyEmail:", err);
+        throw new Error(err.message || "Internal server error");
+      }
+    },
+
+    resendVerificationEmail: async (_, __, context) => {
+      try {
+        const user = await context.getUser();
+        if (!user) throw new Error("Unauthorized");
+        if (user.emailVerified) {
+          return { message: "Your email is already verified." };
+        }
+
+        await issueEmailVerification(user);
+        return { message: "Verification email sent." };
+      } catch (err) {
+        console.error("Error in resendVerificationEmail:", err);
+        throw new Error(err.message || "Internal server error");
+      }
+    },
+
+    updateNotificationPreferences: async (_, { input }, context) => {
+      try {
+        const user = await context.getUser();
+        if (!user) throw new Error("Unauthorized");
+
+        const prefs = user.notificationPreferences || {};
+        if (input.emailReminders !== undefined) prefs.emailReminders = Boolean(input.emailReminders);
+        if (input.productUpdates !== undefined) prefs.productUpdates = Boolean(input.productUpdates);
+        if (input.reminderDaysBefore !== undefined) {
+          const days = Number(input.reminderDaysBefore);
+          if (!Number.isInteger(days) || days < 0 || days > 30) {
+            throw new Error("Reminder days must be between 0 and 30");
+          }
+          prefs.reminderDaysBefore = days;
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+          user._id,
+          { notificationPreferences: prefs },
+          { new: true }
+        );
+        return updatedUser;
+      } catch (err) {
+        console.error("Error in updateNotificationPreferences:", err);
+        throw new Error(err.message || "Internal server error");
+      }
+    },
+
+    deleteAccount: async (_, { password }, context) => {
+      try {
+        const user = await context.getUser();
+        if (!user) throw new Error("Unauthorized");
+
+        const isValid = await bcrypt.compare(password || "", user.password);
+        if (!isValid) throw new Error("Password is incorrect");
+
+        // Remove all data owned by the user, then the account itself.
+        await Promise.all([
+          Subscription.deleteMany({ userId: user._id }),
+          Transaction.deleteMany({ userId: user._id }),
+          Notification.deleteMany({ userId: user._id }),
+        ]);
+        await User.findByIdAndDelete(user._id);
+
+        // End the session.
+        await context.logout();
+        context.req.session.destroy(() => {});
+        context.res.clearCookie("connect.sid");
+
+        return { message: "Your account has been deleted." };
+      } catch (err) {
+        console.error("Error in deleteAccount:", err);
         throw new Error(err.message || "Internal server error");
       }
     },

@@ -4,6 +4,7 @@ import { IoSettingsSharp } from "react-icons/io5";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { LOGOUT } from "../../graphql/mutations/user.mutation";
 import { GET_AUTHENTICATED_USER } from "../../graphql/queries/user.queries";
+import NotificationBell from "../NotificationBell";
 
 const Header = () => {
 	const { data: authUserData } = useQuery(GET_AUTHENTICATED_USER);
@@ -58,6 +59,7 @@ const Header = () => {
 								)}
 							</div>
 						</div>
+						<NotificationBell />
 						<Link
 							to='/settings'
 							className='p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200'

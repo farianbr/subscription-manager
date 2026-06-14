@@ -6,7 +6,22 @@ const userTypeDef = `#graphql
         gender: String!
         profilePicture: String
         currency: String
+        plan: String
+        emailVerified: Boolean
+        notificationPreferences: NotificationPreferences
         paymentMethods: [PaymentMethod]
+    }
+
+    type NotificationPreferences {
+        emailReminders: Boolean!
+        reminderDaysBefore: Int!
+        productUpdates: Boolean!
+    }
+
+    input NotificationPreferencesInput {
+        emailReminders: Boolean
+        reminderDaysBefore: Int
+        productUpdates: Boolean
     }
 
     type PaymentMethod {
@@ -34,6 +49,10 @@ const userTypeDef = `#graphql
         setDefaultPaymentMethod(paymentMethodId: String!): User
         forgotPassword(email: String!): MessageResponse!
         resetPassword(token: String!, newPassword: String!): MessageResponse!
+        verifyEmail(token: String!): MessageResponse!
+        resendVerificationEmail: MessageResponse!
+        updateNotificationPreferences(input: NotificationPreferencesInput!): User
+        deleteAccount(password: String!): MessageResponse!
     }
 
     input SignUpInput {

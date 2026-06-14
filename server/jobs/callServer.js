@@ -1,24 +1,36 @@
 import cron from "node-cron";
 import https from "https";
 
-const URL = "https://subscription-manager-qgi7.onrender.com";
+// Keep-alive self-ping for free-tier hosts that sleep on inactivity (e.g. Render).
+// Configure SELF_PING_URL to enable; it is a no-op otherwise.
+const URL = process.env.SELF_PING_URL;
 
-const callServer = new cron.schedule(
+const task = cron.schedule(
   "*/14 * * * *",
   function () {
+    if (!URL) return;
     https
       .get(URL, (res) => {
         if (res.statusCode === 200) {
-          console.log("GET request sent successfully");
+          console.log("Keep-alive ping sent successfully");
         } else {
-          console.log("GET request failed", res.statusCode);
+          console.log("Keep-alive ping failed", res.statusCode);
         }
       })
       .on("error", (e) => {
-        console.error("Error while sending request", e);
+        console.error("Error while sending keep-alive ping", e);
       });
   },
-  { timezone: "Asia/Dhaka" }
+  { timezone: "Asia/Dhaka", scheduled: false }
 );
 
-export default callServer;
+export default {
+  start() {
+    if (!URL) {
+      console.log("SELF_PING_URL not set — keep-alive ping disabled.");
+      return;
+    }
+    task.start();
+    console.log("Keep-alive ping job started");
+  },
+};

@@ -9,9 +9,9 @@ import { useCurrency } from "../context/CurrencyContext";
 
 const ManualTransactionForm = ({ onSuccess }) => {
   const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
-  const { convertToUSD, rates } = useCurrency();
+  const { rates } = useCurrency();
   const [createTransaction, { loading }] = useMutation(CREATE_TRANSACTION, {
-    refetchQueries: ["GetMonthlyHistory"],
+    refetchQueries: ["GetMonthlyHistory", "GetTransactionHistory"],
   });
   const [addPaymentMethod, { loading: addingPayment }] = useMutation(ADD_PAYMENT_METHOD);
 
@@ -90,15 +90,15 @@ const ManualTransactionForm = ({ onSuccess }) => {
     const provider = companyKey === "other" ? formData.get("customName") : companyKey;
     const serviceName = formData.get("serviceName") || provider;
     
-    // Convert amount to USD
-    const amountInSelectedCurrency = parseFloat(formData.get("amount") || "0");
-    const costInUSD = convertToUSD(amountInSelectedCurrency, selectedCurrency);
-    
+    // Send the entered amount + currency; the backend converts to USD authoritatively.
+    const amount = parseFloat(formData.get("amount") || "0");
+
     const transactionData = {
       serviceName: serviceName,
       provider: provider,
       category: formData.get("category"),
-      costInDollar: costInUSD,
+      amount: amount,
+      currency: selectedCurrency,
       billingCycle: formData.get("billingCycle") || "monthly",
       billingDate: formData.get("billingDate"),
       paymentMethodId: selectedPaymentMethod || null,

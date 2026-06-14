@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
     currency: {
       type: String,
       default: "USD",
-      enum: ["USD", "EUR", "GBP", "INR", "BDT", "CAD", "AUD"],
+      enum: ["USD", "EUR", "GBP", "INR", "BDT", "CAD", "AUD", "JPY", "CHF", "CNY"],
     },
     resetPasswordToken: {
       type: String,
@@ -46,6 +46,9 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Password-reset lookups query by the hashed token.
+userSchema.index({ resetPasswordToken: 1 });
 
 const User = mongoose.model("User", userSchema);
 

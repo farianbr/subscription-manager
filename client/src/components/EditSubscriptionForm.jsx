@@ -9,7 +9,7 @@ import { useCurrency } from "../context/CurrencyContext";
 
 const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
   const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
-  const { rates, convertToUSD } = useCurrency();
+  const { rates } = useCurrency();
   const [updateSubscription, { loading }] = useMutation(UPDATE_SUBSCRIPTION, {
     refetchQueries: ["GetSubscriptions"],
   });
@@ -57,18 +57,23 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
 
       // Set other fields
       setServiceNameInput(subscription.serviceName || "");
-      const savedCurrency = subscription.currency || "USD";
-      // Convert stored USD value to the subscription's currency for display
-      const usdCost = subscription.costInDollar || 0;
-      const rateForCurrency = rates[savedCurrency] || 1;
-      const displayCost = usdCost * rateForCurrency;
-      setCostInDollar(parseFloat(displayCost.toFixed(2)).toString());
+      if (subscription.originalAmount != null && subscription.originalCurrency) {
+        // Source of truth: the exact amount + currency the user entered.
+        setCostInDollar(String(subscription.originalAmount));
+        setCurrency(subscription.originalCurrency);
+      } else {
+        // Legacy records: reconstruct from the stored USD value and saved currency.
+        const savedCurrency = subscription.currency || "USD";
+        const usdCost = subscription.costInDollar || 0;
+        const rateForCurrency = rates[savedCurrency] || 1;
+        setCostInDollar(parseFloat((usdCost * rateForCurrency).toFixed(2)).toString());
+        setCurrency(savedCurrency);
+      }
       setCategory(subscription.category || "entertainment");
       setBillingCycle(subscription.billingCycle || "monthly");
       setPaymentMethodId(subscription.paymentMethodId || "");
       setAlertEnabled(subscription.alertEnabled || false);
-      setCurrency(savedCurrency);
-      
+
       // Format date for input field
       if (subscription.startDate) {
         const date = new Date(parseInt(subscription.startDate));
@@ -88,15 +93,13 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
     const provider = selectedCompany === "other" ? customCompanyName : selectedCompany;
     const serviceName = serviceNameInput || provider;
     
-    // Convert the displayed cost (in selected currency) back to USD for storage
-    const costInUSD = convertToUSD(parseFloat(costInDollar), currency);
-
+    // Send the entered amount + currency; the backend converts to USD authoritatively.
     const subscriptionData = {
       subscriptionId: subscription._id,
       serviceName: serviceName,
       provider: provider,
       category: category,
-      costInDollar: costInUSD,
+      amount: parseFloat(costInDollar),
       currency: currency,
       startDate: startDate,
       alertEnabled: alertEnabled,

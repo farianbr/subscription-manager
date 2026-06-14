@@ -6,6 +6,8 @@ const subscriptionTypeDef = `#graphql
         provider: String!
         category: String!
         costInDollar: Float!
+        originalAmount: Float
+        originalCurrency: String
         billingCycle: String!
         startDate: String!
         nextBillingDate: String!
@@ -31,7 +33,7 @@ const subscriptionTypeDef = `#graphql
         serviceName: String!
         provider: String!
         category: String!
-        costInDollar: Float!
+        amount: Float!
         currency: String
         billingCycle: String!
         startDate: String!
@@ -44,7 +46,7 @@ const subscriptionTypeDef = `#graphql
         serviceName: String
         provider: String
         category: String
-        costInDollar: Float
+        amount: Float
         currency: String
         billingCycle: String
         startDate: String

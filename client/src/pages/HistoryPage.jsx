@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
-import { GET_MONTHLY_HISTORY } from "../graphql/queries/transaction.queries";
+import { GET_TRANSACTION_HISTORY } from "../graphql/queries/transaction.queries";
 import { DELETE_TRANSACTION } from "../graphql/mutations/transaction.mutation";
 import { useCurrency } from "../context/CurrencyContext";
 import { getCompanyLogo } from "../lib/companyLogos";
@@ -9,16 +9,42 @@ import toast from "react-hot-toast";
 import Modal from "../components/ui/Modal";
 import ManualTransactionForm from "../components/ManualTransactionForm";
 
+const MONTHS_PER_PAGE = 6;
+
 const HistoryPage = () => {
   const navigate = useNavigate();
-  const { data, loading, error } = useQuery(GET_MONTHLY_HISTORY);
+  const { data, loading, error, fetchMore, networkStatus } = useQuery(GET_TRANSACTION_HISTORY, {
+    variables: { limit: MONTHS_PER_PAGE, offset: 0 },
+    notifyOnNetworkStatusChange: true,
+  });
   const { formatCurrency } = useCurrency();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [deleteTransaction, { loading: deleting }] = useMutation(DELETE_TRANSACTION, {
-    refetchQueries: ["GetMonthlyHistory"],
+    refetchQueries: ["GetTransactionHistory", "GetMonthlyHistory"],
   });
+
+  const history = data?.transactionHistory;
+  const loadingMore = networkStatus === 3; // fetchMore in flight
+
+  const handleLoadMore = () => {
+    fetchMore({
+      variables: { offset: history.months.length },
+      updateQuery: (prev, { fetchMoreResult }) => {
+        if (!fetchMoreResult) return prev;
+        return {
+          transactionHistory: {
+            ...fetchMoreResult.transactionHistory,
+            months: [
+              ...prev.transactionHistory.months,
+              ...fetchMoreResult.transactionHistory.months,
+            ],
+          },
+        };
+      },
+    });
+  };
 
   const handleDeleteTransaction = async () => {
     if (!transactionToDelete) return;
@@ -48,7 +74,7 @@ const HistoryPage = () => {
   // The month is already a string from the backend (e.g., "January", "February")
   // So we don't need to convert it anymore
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="w-12 h-12 border-3 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
@@ -67,7 +93,7 @@ const HistoryPage = () => {
     );
   }
 
-  const monthlyHistory = data?.monthlyHistory || [];
+  const monthlyHistory = history?.months || [];
 
   return (
     <div className="min-h-screen bg-slate-50 pb-8">
@@ -116,12 +142,10 @@ const HistoryPage = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-3xl font-bold text-blue-600">
-                    {formatCurrency(monthlyHistory.reduce((total, month) => 
-                      total + month.transactions.reduce((sum, t) => sum + t.costInDollar, 0), 0
-                    ))}
+                    {formatCurrency(history?.grandTotal || 0)}
                   </p>
                   <p className="text-sm text-slate-600 mt-1">
-                    {monthlyHistory.reduce((total, month) => total + month.transactions.length, 0)} total transactions
+                    {history?.totalTransactions || 0} total transactions
                   </p>
                 </div>
               </div>
@@ -235,6 +259,18 @@ const HistoryPage = () => {
                 </div>
               </div>
             ))}
+
+            {history?.hasMore && (
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="px-6 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg font-medium text-sm disabled:opacity-50"
+                >
+                  {loadingMore ? "Loading..." : "Load earlier months"}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

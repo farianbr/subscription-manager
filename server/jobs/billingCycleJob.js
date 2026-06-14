@@ -2,27 +2,7 @@ import cron from "node-cron";
 import Subscription from "../models/subscription.model.js";
 import Transaction from "../models/transaction.model.js";
 import User from "../models/user.model.js";
-
-// Helper function to calculate next billing date
-function calculateNextBillingDate(currentDate, billingCycle) {
-  const nextDate = new Date(currentDate);
-  
-  switch (billingCycle) {
-    case "weekly":
-      nextDate.setDate(nextDate.getDate() + 7);
-      break;
-    case "monthly":
-      nextDate.setMonth(nextDate.getMonth() + 1);
-      break;
-    case "yearly":
-      nextDate.setFullYear(nextDate.getFullYear() + 1);
-      break;
-    default:
-      nextDate.setMonth(nextDate.getMonth() + 1);
-  }
-  
-  return nextDate;
-}
+import { calculateNextBillingDate } from "../utils/billing.js";
 
 // Run every day at midnight
 export const billingCycleJob = cron.schedule("0 0 * * *", async () => {
@@ -57,6 +37,8 @@ export const billingCycleJob = cron.schedule("0 0 * * *", async () => {
           provider: subscription.provider,
           category: subscription.category,
           costInDollar: subscription.costInDollar,
+          originalAmount: subscription.originalAmount,
+          originalCurrency: subscription.originalCurrency,
           billingCycle: subscription.billingCycle,
           billingDate: subscription.nextBillingDate,
           paymentMethodId: subscription.paymentMethodId,

@@ -10,7 +10,7 @@ import { useCurrency } from "../context/CurrencyContext";
 
 const TransactionForm = ({ onSuccess }) => {
   const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
-  const { convertToUSD, rates } = useCurrency();
+  const { rates } = useCurrency();
   const [createSubscription, { loading }] = useMutation(CREATE_SUBSCRIPTION, {
     refetchQueries: ["GetSubscriptions", "GetMonthlyHistory"],
   });
@@ -95,15 +95,15 @@ const TransactionForm = ({ onSuccess }) => {
     // Get start date from form
     const startDate = formData.get("startDate");
     
-    // Convert amount to USD
-    const amountInSelectedCurrency = parseFloat(formData.get("amount") || "0");
-    const costInUSD = convertToUSD(amountInSelectedCurrency, selectedCurrency);
-    
+    // Send the entered amount + currency; the backend converts to USD authoritatively.
+    const amount = parseFloat(formData.get("amount") || "0");
+
     const subscriptionData = {
       serviceName: serviceName,
       provider: provider,
       category: formData.get("category"),
-      costInDollar: costInUSD,
+      amount: amount,
+      currency: selectedCurrency,
       startDate: startDate,
       alertEnabled: formData.get("alertEnabled") === "on",
       billingCycle: formData.get("billingCycle") || "monthly",

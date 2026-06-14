@@ -8,6 +8,9 @@ export const GET_SUBSCRIPTIONS = gql`
       provider
       category
       costInDollar
+      originalAmount
+      originalCurrency
+      currency
       billingCycle
       startDate
       nextBillingDate

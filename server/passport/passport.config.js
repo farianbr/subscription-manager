@@ -8,7 +8,11 @@ export const configurePassport = async () => {
   passport.use(
     new LocalStrategy(async (email, password, done) => {
       try {
-        const user = await User.findOne({ email });
+        // Case-insensitive lookup so legacy mixed-case emails still match.
+        const user = await User.findOne({ email }).collation({
+          locale: "en",
+          strength: 2,
+        });
         if (!user) return done(null, false, { message: "No user" });
 
         const match = await bcrypt.compare(password, user.password);

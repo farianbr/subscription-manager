@@ -7,6 +7,8 @@ const transactionTypeDef = `#graphql
         provider: String!
         category: String!
         costInDollar: Float!
+        originalAmount: Float
+        originalCurrency: String
         billingCycle: String!
         billingDate: String!
         paymentMethodId: String
@@ -22,11 +24,20 @@ const transactionTypeDef = `#graphql
         totalSpent: Float!
     }
 
+    type TransactionHistoryPage {
+        months: [MonthlyHistory!]!
+        totalMonths: Int!
+        totalTransactions: Int!
+        grandTotal: Float!
+        hasMore: Boolean!
+    }
+
     input CreateTransactionInput {
         serviceName: String!
         provider: String!
         category: String!
-        costInDollar: Float!
+        amount: Float!
+        currency: String
         billingCycle: String
         billingDate: String
         paymentMethodId: String
@@ -38,6 +49,7 @@ const transactionTypeDef = `#graphql
 
     type Query {
         monthlyHistory: [MonthlyHistory!]
+        transactionHistory(limit: Int, offset: Int): TransactionHistoryPage!
     }
 
     type Mutation {

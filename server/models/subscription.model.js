@@ -19,9 +19,18 @@ const subscriptionSchema = new mongoose.Schema({
     enum: ["entertainment", "productivity", "utilities", "education"],
     required: true,
   },
+  // Normalized USD value, derived server-side — used for cross-currency aggregation.
   costInDollar: {
     type: Number,
     required: true,
+  },
+  // The amount and currency the user actually entered (source of truth).
+  originalAmount: {
+    type: Number,
+  },
+  originalCurrency: {
+    type: String,
+    enum: ["USD", "EUR", "GBP", "INR", "BDT", "CAD", "AUD", "JPY", "CHF", "CNY"],
   },
   billingCycle: {
     type: String,
@@ -39,7 +48,7 @@ const subscriptionSchema = new mongoose.Schema({
   currency: {
     type: String,
     default: "USD",
-    enum: ["USD", "EUR", "GBP", "INR", "BDT", "CAD", "AUD"],
+    enum: ["USD", "EUR", "GBP", "INR", "BDT", "CAD", "AUD", "JPY", "CHF", "CNY"],
   },
   paymentMethodId: {
     type: String,
@@ -53,6 +62,10 @@ const subscriptionSchema = new mongoose.Schema({
     default: false 
   },
 }, { timestamps: true });
+
+// Most queries fetch a user's subscriptions; the billing cron scans by due date.
+subscriptionSchema.index({ userId: 1, createdAt: -1 });
+subscriptionSchema.index({ nextBillingDate: 1 });
 
 const Subscription = mongoose.model("Subscription", subscriptionSchema);
 

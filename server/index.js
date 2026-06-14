@@ -1,5 +1,6 @@
 import http from "http";
 import cors from "cors";
+import helmet from "helmet";
 import express from "express";
 import dotenv from "dotenv";
 import path from "path";
@@ -22,8 +23,12 @@ import { startBillingCycleJob } from "./jobs/billingCycleJob.js";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import { ApolloServerPluginLandingPageDisabled } from "@apollo/server/plugin/disabled";
 import callServer from "./jobs/callServer.js";
+import { graphqlLimiter, authRateLimiter } from "./middleware/rateLimit.js";
 
 dotenv.config();
+
+const PORT = process.env.PORT || 4000;
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 callServer.start();
 
@@ -39,6 +44,15 @@ const isProduction = process.env.NODE_ENV === "production";
 
 // Behind a proxy (Render/Heroku/etc.) so secure cookies work over forwarded HTTPS
 if (isProduction) app.set("trust proxy", 1);
+
+// Security headers. CSP is disabled for now since the SPA + Apollo sandbox
+// need a tailored policy — tracked as a follow-up in the hardening roadmap.
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 const __dirname = path.resolve();
 
@@ -86,10 +100,12 @@ await server.start();
 app.use(
   "/graphql",
   cors({
-    origin: "http://localhost:5173",
+    origin: CLIENT_URL,
     credentials: true,
   }),
+  graphqlLimiter,
   express.json(),
+  authRateLimiter,
   expressMiddleware(server, {
     context: async ({ req, res }) => buildContext({ req, res }),
   })
@@ -110,7 +126,7 @@ app.get("*path", (req, res) => {
   res.sendFile(path.join(__dirname, "client/dist", "index.html"));
 });
 
-await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
+await new Promise((resolve) => httpServer.listen({ port: PORT }, resolve));
 await connectDB();
 
-console.log("Server ready");
+console.log(`Server ready on port ${PORT}`);

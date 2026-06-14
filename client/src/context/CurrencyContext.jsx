@@ -1,12 +1,13 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { useQuery } from "@apollo/client/react";
 import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
+import { GET_EXCHANGE_RATES } from "../graphql/queries/exchangeRate.queries";
 
 const CurrencyContext = createContext();
 
-// Exchange rates (you can fetch these from an API in production)
-const EXCHANGE_RATES = {
+// Static fallback rates — only used until/if the backend rate query resolves.
+const FALLBACK_RATES = {
   USD: 1,
   EUR: 0.92,
   GBP: 0.79,
@@ -21,8 +22,18 @@ const EXCHANGE_RATES = {
 
 export const CurrencyProvider = ({ children }) => {
   const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
+  const { data: ratesData } = useQuery(GET_EXCHANGE_RATES);
   const [currency, setCurrency] = useState("USD");
-  const rates = EXCHANGE_RATES;
+
+  // Live rates from the backend (single source of truth), with static fallback.
+  const rates = useMemo(() => {
+    const list = ratesData?.exchangeRates?.rates;
+    if (!list || list.length === 0) return FALLBACK_RATES;
+    return list.reduce((acc, { code, rate }) => {
+      acc[code] = rate;
+      return acc;
+    }, {});
+  }, [ratesData]);
 
   // Update currency when user data changes
   useEffect(() => {

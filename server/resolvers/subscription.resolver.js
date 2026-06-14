@@ -1,26 +1,41 @@
 import Subscription from "../models/subscription.model.js";
 import Transaction from "../models/transaction.model.js";
 import User from "../models/user.model.js";
+import { calculateNextBillingDate } from "../utils/billing.js";
+import { toUSD } from "../utils/exchangeRates.js";
+import {
+  requireString,
+  requireEnum,
+  requirePositiveAmount,
+  requireDate,
+  CATEGORIES,
+  BILLING_CYCLES,
+  CURRENCIES,
+} from "../utils/validators.js";
 
-// Helper function to calculate next billing date from start date
-function calculateNextBillingDate(startDate, billingCycle) {
-  const nextDate = new Date(startDate);
-  
-  switch (billingCycle) {
-    case "weekly":
-      nextDate.setDate(nextDate.getDate() + 7);
-      break;
-    case "monthly":
-      nextDate.setMonth(nextDate.getMonth() + 1);
-      break;
-    case "yearly":
-      nextDate.setFullYear(nextDate.getFullYear() + 1);
-      break;
-    default:
-      nextDate.setMonth(nextDate.getMonth() + 1);
-  }
-  
-  return nextDate;
+// Validate and normalize the fields shared by create/update subscription inputs.
+// In "update" mode, undefined fields are left untouched. Monetary fields
+// (amount/currency) are validated but converted to USD by the caller.
+function validateSubscriptionInput(input, { partial = false } = {}) {
+  const clean = {};
+  const has = (key) => input[key] !== undefined && input[key] !== null;
+
+  if (!partial || has("serviceName"))
+    clean.serviceName = requireString(input.serviceName, "Service name", { max: 100 });
+  if (!partial || has("provider"))
+    clean.provider = requireString(input.provider, "Provider", { max: 100 });
+  if (!partial || has("category"))
+    clean.category = requireEnum(input.category, CATEGORIES, "Category");
+  if (!partial || has("amount"))
+    clean.amount = requirePositiveAmount(input.amount, "Amount");
+  if (!partial || has("billingCycle"))
+    clean.billingCycle = requireEnum(input.billingCycle, BILLING_CYCLES, "Billing cycle");
+  if (!partial || has("startDate"))
+    clean.startDate = requireDate(input.startDate, "Start date");
+  if (has("currency"))
+    clean.currency = requireEnum(input.currency, CURRENCIES, "Currency");
+
+  return clean;
 }
 
 const subscriptionResolver = {
@@ -41,47 +56,61 @@ const subscriptionResolver = {
   Mutation: {
     createSubscription: async (_, { input }, context) => {
       try {
-        if (!context.getUser()) throw new Error("Unauthorized");
-        
-        const startDate = new Date(input.startDate);
-        const nextBillingDate = calculateNextBillingDate(startDate, input.billingCycle);
-        
+        const user = await context.getUser();
+        if (!user) throw new Error("Unauthorized");
+
+        const clean = validateSubscriptionInput(input);
+        const currency = clean.currency || user.currency || "USD";
+        const costInDollar = await toUSD(clean.amount, currency);
+        const nextBillingDate = calculateNextBillingDate(clean.startDate, clean.billingCycle);
+
+        // Resolve payment method name if a (validated) paymentMethodId is provided
+        let paymentMethodName = null;
+        if (input.paymentMethodId) {
+          const paymentMethod = user.paymentMethods.find((pm) => pm.id === input.paymentMethodId);
+          if (!paymentMethod) throw new Error("Invalid payment method");
+          paymentMethodName = paymentMethod.name;
+        }
+
         const newSubscription = new Subscription({
-          ...input,
-          userId: context.getUser()._id,
-          startDate: startDate,
-          nextBillingDate: nextBillingDate,
+          serviceName: clean.serviceName,
+          provider: clean.provider,
+          category: clean.category,
+          billingCycle: clean.billingCycle,
+          startDate: clean.startDate,
+          costInDollar,
+          originalAmount: clean.amount,
+          originalCurrency: currency,
+          currency,
+          userId: user._id,
+          nextBillingDate,
+          paymentMethodId: input.paymentMethodId,
+          alertEnabled: Boolean(input.alertEnabled),
           alertSentForCurrentCycle: false,
         });
         await newSubscription.save();
-        
-        // Get payment method name if paymentMethodId is provided
-        let paymentMethodName = null;
-        if (input.paymentMethodId) {
-          const user = await User.findById(context.getUser()._id);
-          const paymentMethod = user.paymentMethods.find(pm => pm.id === input.paymentMethodId);
-          paymentMethodName = paymentMethod?.name || null;
-        }
-        
+
         // Create first transaction for this billing cycle
         const newTransaction = new Transaction({
-          userId: context.getUser()._id,
+          userId: user._id,
           subscriptionId: newSubscription._id,
-          serviceName: input.serviceName,
-          provider: input.provider,
-          category: input.category,
-          costInDollar: input.costInDollar,
-          billingCycle: input.billingCycle,
-          billingDate: startDate,
+          serviceName: clean.serviceName,
+          provider: clean.provider,
+          category: clean.category,
+          costInDollar,
+          originalAmount: clean.amount,
+          originalCurrency: currency,
+          billingCycle: clean.billingCycle,
+          billingDate: clean.startDate,
           paymentMethodId: input.paymentMethodId,
-          paymentMethodName: paymentMethodName,
+          paymentMethodName,
         });
         await newTransaction.save();
-        
+
         return newSubscription;
       } catch (err) {
         console.error("Error creating subscription:", err);
-        throw new Error("Error creating subscription");
+        throw new Error(err.message || "Error creating subscription");
       }
     },
     updateSubscription: async (_, { input }, context) => {
@@ -96,15 +125,41 @@ const subscriptionResolver = {
           throw new Error("Unauthorized to update this subscription");
         }
 
+        const clean = validateSubscriptionInput(input, { partial: true });
+        const { amount, ...update } = clean;
+
+        // Recompute the normalized USD value when amount and/or currency change.
+        if (amount !== undefined || update.currency !== undefined) {
+          const currency = update.currency || subscription.originalCurrency || subscription.currency || "USD";
+          const originalAmount = amount !== undefined ? amount : subscription.originalAmount;
+          if (originalAmount !== undefined && originalAmount !== null) {
+            update.currency = currency;
+            update.originalAmount = originalAmount;
+            update.originalCurrency = currency;
+            update.costInDollar = await toUSD(originalAmount, currency);
+          }
+        }
+
+        if (input.alertEnabled !== undefined) {
+          update.alertEnabled = Boolean(input.alertEnabled);
+        }
+        if (input.paymentMethodId !== undefined) {
+          if (input.paymentMethodId) {
+            const pm = user.paymentMethods.find((p) => p.id === input.paymentMethodId);
+            if (!pm) throw new Error("Invalid payment method");
+          }
+          update.paymentMethodId = input.paymentMethodId;
+        }
+
         // If startDate is being updated, recalculate nextBillingDate
-        if (input.startDate) {
-          const billingCycle = input.billingCycle || subscription.billingCycle;
-          input.nextBillingDate = calculateNextBillingDate(new Date(input.startDate), billingCycle);
+        if (update.startDate) {
+          const billingCycle = update.billingCycle || subscription.billingCycle;
+          update.nextBillingDate = calculateNextBillingDate(update.startDate, billingCycle);
         }
 
         const updatedSubscription = await Subscription.findByIdAndUpdate(
           input.subscriptionId,
-          { $set: input },
+          { $set: update },
           { new: true }
         );
         return updatedSubscription;

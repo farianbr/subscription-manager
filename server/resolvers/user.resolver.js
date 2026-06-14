@@ -2,6 +2,13 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { sendMail } from "../utils/mailer.js";
+import {
+  requireString,
+  requireEmail,
+  requirePassword,
+  requireEnum,
+  GENDERS,
+} from "../utils/validators.js";
 
 const userResolver = {
   Query: {
@@ -35,10 +42,11 @@ const userResolver = {
   Mutation: {
     signUp: async (_, { input }, context) => {
       try {
-        const { email, name, password, gender } = input;
-        if (!email || !password || !name || !gender) throw new Error("All fields are required");
+        const email = requireEmail(input.email);
+        const name = requireString(input.name, "Name", { max: 100 });
+        const password = requirePassword(input.password);
+        const gender = requireEnum(input.gender, GENDERS, "Gender");
 
-      
         // check if user exists
         const existingUser = await User.findOne({ email });
         if (existingUser) throw new Error("Email already in use");
@@ -67,8 +75,8 @@ const userResolver = {
     },
     login: async (_, { input }, context) => {
       try {
-        const { email, password } = input;
-        if (!email || !password) throw new Error("All fields are required");
+        const email = requireEmail(input.email);
+        const password = requireString(input.password, "Password", { max: 200 });
 
         const { user, info } = await context.authenticate("graphql-local", {
           email,

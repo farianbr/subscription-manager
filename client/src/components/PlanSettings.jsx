@@ -44,7 +44,7 @@ const PlanSettings = () => {
   if (plansLoading || usageLoading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="w-8 h-8 border-3 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-3 border-border border-t-accent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -58,19 +58,19 @@ const PlanSettings = () => {
     <div className="space-y-8">
       {/* Current usage */}
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Your Plan</h3>
-        <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Your Plan</h3>
+        <div className="p-4 bg-surface-2 rounded-xl border border-border">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-slate-600">Subscriptions used</span>
-            <span className="text-sm font-medium text-slate-900">
+            <span className="text-sm text-muted">Subscriptions used</span>
+            <span className="text-sm font-medium text-foreground">
               {count}
               {limit ? ` / ${limit}` : " (unlimited)"}
             </span>
           </div>
           {limit ? (
-            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-surface-2 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full ${usagePct >= 100 ? "bg-red-500" : "bg-blue-600"}`}
+                className={`h-full rounded-full ${usagePct >= 100 ? "bg-red-500" : "bg-accent"}`}
                 style={{ width: `${usagePct}%` }}
               />
             </div>
@@ -86,20 +86,20 @@ const PlanSettings = () => {
             <div
               key={plan.id}
               className={`rounded-xl border p-5 flex flex-col ${
-                isCurrent ? "border-blue-600 ring-1 ring-blue-600" : "border-slate-200"
+                isCurrent ? "border-accent ring-1 ring-accent" : "border-border"
               }`}
             >
               <div className="mb-4">
-                <h4 className="text-lg font-semibold text-slate-900">{plan.name}</h4>
+                <h4 className="text-lg font-semibold text-foreground">{plan.name}</h4>
                 <p className="mt-1">
-                  <span className="text-2xl font-bold text-slate-900">
+                  <span className="text-2xl font-bold text-foreground">
                     ${plan.priceMonthly.toFixed(2)}
                   </span>
-                  <span className="text-sm text-slate-500">/mo</span>
+                  <span className="text-sm text-muted">/mo</span>
                 </p>
               </div>
 
-              <ul className="space-y-2 text-sm text-slate-600 flex-1">
+              <ul className="space-y-2 text-sm text-muted flex-1">
                 <li>
                   {plan.maxSubscriptions ? `Up to ${plan.maxSubscriptions} subscriptions` : "Unlimited subscriptions"}
                 </li>
@@ -109,9 +109,9 @@ const PlanSettings = () => {
                 {plan.features
                   .filter((f) => f !== "unlimited_subscriptions")
                   .map((f) => (
-                    <li key={f} className="text-slate-900">{FEATURE_LABELS[f] || f}</li>
+                    <li key={f} className="text-foreground">{FEATURE_LABELS[f] || f}</li>
                   ))}
-                {plan.maxMembers > 1 && <li className="text-slate-900">Up to {plan.maxMembers} members</li>}
+                {plan.maxMembers > 1 && <li className="text-foreground">Up to {plan.maxMembers} members</li>}
               </ul>
 
               <button
@@ -119,8 +119,8 @@ const PlanSettings = () => {
                 disabled={isCurrent || changing}
                 className={`mt-5 w-full py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isCurrent
-                    ? "bg-slate-100 text-slate-500 cursor-default"
-                    : "bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                    ? "bg-surface-2 text-muted cursor-default"
+                    : "bg-accent hover:bg-accent-hover text-accent-fg disabled:opacity-50"
                 }`}
               >
                 {isCurrent ? "Current plan" : changing ? "Updating..." : `Switch to ${plan.name}`}
@@ -130,7 +130,7 @@ const PlanSettings = () => {
         })}
       </div>
 
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-muted">
         Payments are not yet enabled — plan changes apply immediately for now.
       </p>
     </div>

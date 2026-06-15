@@ -18,6 +18,8 @@ export const GET_TRANSACTION_HISTORY = gql`
           provider
           category
           costInDollar
+          originalAmount
+          originalCurrency
           billingCycle
           billingDate
           paymentMethodId

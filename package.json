@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "set NODE_ENV=production && node server/index.js",
-    "dev": "set NODE_ENV=development && nodemon server/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "cross-env NODE_ENV=production node server/index.js",
+    "dev": "cross-env NODE_ENV=development nodemon server/index.js",
+    "test": "node --test \"server/tests/**/*.test.js\"",
     "build": "npm install && npm install --prefix client && npm run build --prefix client"
   },
   "type": "module",
@@ -33,6 +33,7 @@
     "validator": "^13.15.35"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "nodemon": "^3.1.10"
   }
 }

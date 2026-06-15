@@ -14,18 +14,11 @@ import { useCurrency } from "../context/CurrencyContext";
 import EditSubscriptionForm from "./EditSubscriptionForm";
 import { getCompanyLogo } from "../lib/companyLogos";
 
-const categoryColorMap = {
-  Productivity: "bg-emerald-50 border-emerald-200",
-  Entertainment: "bg-pink-50 border-pink-200",
-  Utilities: "bg-blue-50 border-blue-200",
-  Education: "bg-amber-50 border-amber-200",
-};
-
 const categoryIconColor = {
-  Productivity: "text-emerald-600",
-  Entertainment: "text-pink-600",
-  Utilities: "text-blue-600",
-  Education: "text-amber-600",
+  Productivity: "text-emerald-500",
+  Entertainment: "text-pink-500",
+  Utilities: "text-sky-500",
+  Education: "text-amber-500",
 };
 
 const Card = ({ subscription }) => {
@@ -74,7 +67,6 @@ const Card = ({ subscription }) => {
   // Use nextBillingDate for display
   const formattedDate = formatDate(nextBillingDate);
 
-  const cardClass = categoryColorMap[category];
   const iconColor = categoryIconColor[category];
 
   const handleDeleteSubscription = async () => {
@@ -114,59 +106,49 @@ const Card = ({ subscription }) => {
   return (
     <>
       <div className="group relative">
-        <div
-          className={`bg-white border-2 ${cardClass} rounded-lg p-5 hover:shadow-md transition-shadow duration-200`}
-        >
+        <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 hover:shadow-lg hover:shadow-black/[0.03] transition-shadow duration-200">
           {/* Header with Company Logo */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center space-x-3 flex-1">
-              {/* Company Logo */}
               {companyLogo ? (
                 <img
                   src={companyLogo}
                   alt={serviceName}
-                  className="w-10 h-10 rounded-lg object-contain bg-slate-50 p-1 border border-slate-200"
+                  className="w-11 h-11 rounded-xl object-contain bg-surface-2 p-1.5 border border-border"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200">
-                  <span className="text-slate-500 text-lg font-bold">
+                <div className="w-11 h-11 rounded-xl bg-surface-2 flex items-center justify-center border border-border">
+                  <span className="text-muted text-lg font-semibold">
                     {serviceName.charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
 
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-slate-900 mb-0.5">
+                <h3 className="text-[17px] font-semibold tracking-tight text-foreground mb-0.5">
                   {serviceName}
                 </h3>
-                <p className="text-sm text-slate-500 capitalize">{provider}</p>
+                <p className="text-sm text-muted capitalize">{provider}</p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 ml-2">
-              <button
-                onClick={() => setShowEditModal(true)}
-                className="p-1.5 hover:bg-blue-50 rounded transition-colors duration-200"
-                title="Edit subscription"
-              >
-                <HiPencilAlt
-                  className="text-blue-500 hover:text-blue-600"
-                  size={16}
-                />
-              </button>
-            </div>
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="p-1.5 text-muted hover:text-accent hover:bg-surface-2 rounded-lg transition-colors duration-200"
+              title="Edit subscription"
+            >
+              <HiPencilAlt size={16} />
+            </button>
           </div>
 
           {/* Amount - Primary Info */}
-          <div className="mb-4 pb-4 border-b border-slate-200">
-            <p className="text-sm text-slate-600 mb-1">
+          <div className="mb-4 pb-4 border-b border-border">
+            <p className="text-sm text-muted mb-1">
               {billingCycle
-                ? `${
-                    billingCycle.charAt(0).toUpperCase() + billingCycle.slice(1)
-                  } Cost`
+                ? `${billingCycle.charAt(0).toUpperCase() + billingCycle.slice(1)} Cost`
                 : "Monthly Cost"}
             </p>
-            <p className="text-2xl font-bold text-slate-900">
+            <p className="text-2xl sm:text-[28px] leading-tight font-semibold tracking-tight text-foreground">
               {formatCurrency(costInDollar)}
             </p>
           </div>
@@ -174,64 +156,51 @@ const Card = ({ subscription }) => {
           {/* Details Grid */}
           <div className="space-y-2.5 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-slate-600">Renewal Date</span>
-              <span className="font-medium text-slate-900">
-                {formattedDate}
-              </span>
+              <span className="text-muted">Renewal Date</span>
+              <span className="font-medium text-foreground">{formattedDate}</span>
             </div>
 
             {billingCycle && (
               <div className="flex items-center justify-between">
-                <span className="text-slate-600">Billing Cycle</span>
-                <span className="font-medium text-slate-900 capitalize">
-                  {billingCycle}
-                </span>
+                <span className="text-muted">Billing Cycle</span>
+                <span className="font-medium text-foreground capitalize">{billingCycle}</span>
               </div>
             )}
 
             {paymentMethodId && (
               <div className="flex items-center justify-between">
-                <span className="text-slate-600">Payment Method</span>
-                <span className="font-medium text-slate-900 capitalize">
-                  {paymentMethodName}
-                </span>
+                <span className="text-muted">Payment Method</span>
+                <span className="font-medium text-foreground capitalize">{paymentMethodName}</span>
               </div>
             )}
             {category && (
               <div className="flex items-center justify-between">
-                <span className="text-slate-600">Category</span>
-                <span
-                  className={`font-medium ${iconColor || "text-slate-900"}`}
-                >
-                  {category}
-                </span>
+                <span className="text-muted">Category</span>
+                <span className={`font-medium ${iconColor || "text-foreground"}`}>{category}</span>
               </div>
             )}
 
             {/* Alert Toggle */}
-            <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-200">
-              <span className="text-slate-600">Reminders</span>
+            <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
+              <span className="text-muted">Reminders</span>
               <button
                 onClick={handleToggle}
                 disabled={updateLoading}
                 className="inline-flex items-center cursor-pointer"
+                aria-label="Toggle reminders"
               >
                 {updateLoading ? (
                   <div className="w-10 h-5 flex items-center justify-center">
-                    <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin"></div>
+                    <div className="w-4 h-4 border-2 border-border border-t-muted rounded-full animate-spin"></div>
                   </div>
                 ) : (
                   <div
                     className={`relative w-10 h-5 rounded-full transition-colors duration-200
-                      ${alertEnabled ? "bg-green-500" : "bg-slate-300"}
+                      ${alertEnabled ? "bg-green-500" : "bg-border"}
                       after:content-[''] after:absolute after:top-0.5 after:left-0.5
-                      after:h-4 after:w-4 after:rounded-full after:bg-white
+                      after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow
                       after:transition-all after:duration-200
-                      ${
-                        alertEnabled
-                          ? "after:translate-x-5"
-                          : "after:translate-x-0"
-                      }
+                      ${alertEnabled ? "after:translate-x-5" : "after:translate-x-0"}
                     `}
                   />
                 )}
@@ -239,11 +208,11 @@ const Card = ({ subscription }) => {
             </div>
           </div>
 
-          {/* Delete Subscription Button - At Bottom */}
+          {/* Delete Subscription Button */}
           <button
             onClick={() => setShowDeleteModal(true)}
             disabled={deleteLoading}
-            className="w-full mt-4 flex items-center justify-center space-x-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 py-2.5 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed border border-red-200"
+            className="w-full mt-4 flex items-center justify-center space-x-2 text-red-500 hover:text-red-600 hover:bg-red-500/10 py-2.5 px-4 rounded-xl font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <MdCancel size={18} />
             <span>Delete Subscription</span>
@@ -258,11 +227,11 @@ const Card = ({ subscription }) => {
         title="Delete Subscription"
       >
         <div className="space-y-4">
-          <p className="text-slate-700">
+          <p className="text-foreground">
             Are you sure you want to delete{" "}
             <strong>{serviceName}</strong> from {provider}?
           </p>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted">
             This will permanently remove this subscription from your tracking. This action cannot be undone.
           </p>
 
@@ -270,14 +239,14 @@ const Card = ({ subscription }) => {
             <button
               onClick={() => setShowDeleteModal(false)}
               disabled={deleteLoading}
-              className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors duration-200"
+              className="flex-1 px-4 py-2.5 bg-surface-2 hover:bg-border text-foreground rounded-xl font-medium transition-colors duration-200"
             >
               Cancel
             </button>
             <button
               onClick={handleDeleteSubscription}
               disabled={deleteLoading}
-              className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 flex items-center justify-center space-x-2"
+              className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors duration-200 disabled:opacity-50 flex items-center justify-center space-x-2"
             >
               {deleteLoading ? (
                 <>
@@ -295,7 +264,7 @@ const Card = ({ subscription }) => {
       {/* Edit Subscription Modal */}
       <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)}>
         <div className="p-6">
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Edit Subscription</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground mb-6">Edit Subscription</h2>
           <EditSubscriptionForm 
             subscription={subscription}
             onSuccess={() => setShowEditModal(false)}

@@ -21,11 +21,11 @@ function App() {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-3 border-slate-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Subscription Manager</h2>
-          <p className="text-slate-600">Loading your dashboard...</p>
+          <div className="w-11 h-11 border-3 border-border border-t-accent rounded-full animate-spin mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold tracking-tight text-foreground mb-1">Subscription Manager</h2>
+          <p className="text-muted">Loading your dashboard…</p>
         </div>
       </div>
     );

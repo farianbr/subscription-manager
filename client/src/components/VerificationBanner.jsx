@@ -21,15 +21,15 @@ const VerificationBanner = () => {
   };
 
   return (
-    <div className="bg-amber-50 border-b border-amber-200">
+    <div className="bg-amber-500/10 border-b border-amber-500/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-center gap-3 text-sm">
-        <span className="text-amber-800">
+        <span className="text-amber-700 dark:text-amber-400">
           Please verify your email to secure your account.
         </span>
         <button
           onClick={handleResend}
           disabled={loading}
-          className="font-medium text-amber-900 underline hover:no-underline disabled:opacity-50"
+          className="font-medium text-amber-800 dark:text-amber-300 underline hover:no-underline disabled:opacity-50"
         >
           {loading ? "Sending..." : "Resend email"}
         </button>

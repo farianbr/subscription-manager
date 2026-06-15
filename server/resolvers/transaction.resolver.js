@@ -10,6 +10,7 @@ import {
   BILLING_CYCLES,
   CURRENCIES,
 } from "../utils/validators.js";
+import logger from "../utils/logger.js";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -60,7 +61,7 @@ const transactionResolver = {
 
         return groups.map(shapeMonth);
       } catch (err) {
-        console.error("Error getting monthly history:", err);
+        logger.error("Error getting monthly history:", err);
         throw new Error("Error getting monthly history");
       }
     },
@@ -107,7 +108,7 @@ const transactionResolver = {
           hasMore: safeOffset + result.page.length < totalMonths,
         };
       } catch (err) {
-        console.error("Error getting transaction history:", err);
+        logger.error("Error getting transaction history:", err);
         throw new Error("Error getting transaction history");
       }
     },
@@ -158,8 +159,60 @@ const transactionResolver = {
         await newTransaction.save();
         return newTransaction;
       } catch (err) {
-        console.error("Error creating transaction:", err);
+        logger.error("Error creating transaction:", err);
         throw new Error(err.message || "Error creating transaction");
+      }
+    },
+
+    updateTransaction: async (_, { input }, context) => {
+      try {
+        const user = await context.getUser();
+        if (!user) throw new Error("Unauthorized");
+
+        const transaction = await Transaction.findById(input.transactionId);
+        if (!transaction) throw new Error("Transaction not found");
+
+        if (transaction.userId.toString() !== user._id.toString()) {
+          throw new Error("Unauthorized to update this transaction");
+        }
+
+        const serviceName = requireString(input.serviceName, "Service name", { max: 100 });
+        const provider = requireString(input.provider, "Provider", { max: 100 });
+        const category = requireEnum(input.category, CATEGORIES, "Category");
+        const amount = requirePositiveAmount(input.amount, "Amount");
+        const billingCycle = optionalEnum(input.billingCycle, BILLING_CYCLES, "Billing cycle") || "monthly";
+        const billingDate = input.billingDate ? requireDate(input.billingDate, "Billing date") : transaction.billingDate;
+        const currency = input.currency
+          ? requireEnum(input.currency, CURRENCIES, "Currency")
+          : transaction.originalCurrency || user.currency || "USD";
+        const { paymentMethodId } = input;
+
+        const costInDollar = await toUSD(amount, currency);
+
+        // Get payment method name if provided
+        let paymentMethodName = null;
+        if (paymentMethodId) {
+          const paymentMethod = user.paymentMethods.find(pm => pm.id === paymentMethodId);
+          if (!paymentMethod) throw new Error("Invalid payment method");
+          paymentMethodName = paymentMethod.name;
+        }
+
+        transaction.serviceName = serviceName;
+        transaction.provider = provider;
+        transaction.category = category;
+        transaction.costInDollar = costInDollar;
+        transaction.originalAmount = amount;
+        transaction.originalCurrency = currency;
+        transaction.billingCycle = billingCycle;
+        transaction.billingDate = billingDate;
+        transaction.paymentMethodId = paymentMethodId;
+        transaction.paymentMethodName = paymentMethodName;
+
+        await transaction.save();
+        return transaction;
+      } catch (err) {
+        logger.error("Error updating transaction:", err);
+        throw new Error(err.message || "Error updating transaction");
       }
     },
 
@@ -178,7 +231,7 @@ const transactionResolver = {
         await Transaction.findByIdAndDelete(transactionId);
         return { message: "Transaction deleted successfully" };
       } catch (err) {
-        console.error("Error deleting transaction:", err);
+        logger.error("Error deleting transaction:", err);
         throw new Error(err.message || "Error deleting transaction");
       }
     },

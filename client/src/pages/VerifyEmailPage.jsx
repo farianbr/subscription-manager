@@ -49,20 +49,20 @@ const VerifyEmailPage = () => {
   }, [token, verifyEmail, client]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 max-w-md w-full text-center">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="bg-surface rounded-2xl shadow-sm border border-border p-8 max-w-md w-full text-center">
         {status === "verifying" && (
           <>
-            <div className="w-10 h-10 border-3 border-slate-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
-            <h1 className="text-xl font-semibold text-slate-900">Verifying your email…</h1>
+            <div className="w-10 h-10 border-3 border-border border-t-accent rounded-full animate-spin mx-auto mb-4" />
+            <h1 className="text-xl font-semibold text-foreground">Verifying your email…</h1>
           </>
         )}
         {status === "success" && (
           <>
             <div className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4 text-2xl">✓</div>
-            <h1 className="text-xl font-semibold text-slate-900 mb-2">Email verified</h1>
-            <p className="text-slate-600 mb-6">{message}</p>
-            <Link to="/" className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium">
+            <h1 className="text-xl font-semibold text-foreground mb-2">Email verified</h1>
+            <p className="text-muted mb-6">{message}</p>
+            <Link to="/" className="inline-block bg-accent hover:bg-accent-hover text-accent-fg px-6 py-2.5 rounded-lg font-medium">
               Go to dashboard
             </Link>
           </>
@@ -70,9 +70,9 @@ const VerifyEmailPage = () => {
         {status === "error" && (
           <>
             <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 text-2xl">!</div>
-            <h1 className="text-xl font-semibold text-slate-900 mb-2">Verification failed</h1>
-            <p className="text-slate-600 mb-6">{message}</p>
-            <Link to="/" className="inline-block bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-2.5 rounded-lg font-medium">
+            <h1 className="text-xl font-semibold text-foreground mb-2">Verification failed</h1>
+            <p className="text-muted mb-6">{message}</p>
+            <Link to="/" className="inline-block bg-surface-2 hover:bg-border text-foreground px-6 py-2.5 rounded-lg font-medium">
               Back to app
             </Link>
           </>

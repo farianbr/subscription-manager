@@ -7,6 +7,7 @@ import GridBackground from "./components/ui/GridBackground.jsx";
 import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
 import { ApolloProvider } from "@apollo/client/react";
 import { CurrencyProvider } from "./context/CurrencyContext.jsx";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 
 const client = new ApolloClient({
   link: new HttpLink({
@@ -19,13 +20,15 @@ const client = new ApolloClient({
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <GridBackground>
-        <ApolloProvider client={client}>
-          <CurrencyProvider>
-            <App />
-          </CurrencyProvider>
-        </ApolloProvider>
-      </GridBackground>
+      <ThemeProvider>
+        <GridBackground>
+          <ApolloProvider client={client}>
+            <CurrencyProvider>
+              <App />
+            </CurrencyProvider>
+          </ApolloProvider>
+        </GridBackground>
+      </ThemeProvider>
     </BrowserRouter>
   </StrictMode>
 );

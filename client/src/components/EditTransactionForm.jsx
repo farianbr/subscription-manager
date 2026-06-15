@@ -1,17 +1,17 @@
-import { UPDATE_SUBSCRIPTION } from "../graphql/mutations/subscription.mutation";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.queries";
+import { UPDATE_TRANSACTION } from "../graphql/mutations/transaction.mutation";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { getCompanyOptions } from "../lib/companyLogos";
 import { useCurrency } from "../context/CurrencyContext";
 
-const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
+const EditTransactionForm = ({ transaction, onSuccess, onCancel }) => {
   const { data: userData } = useQuery(GET_AUTHENTICATED_USER);
   const { rates } = useCurrency();
-  const [updateSubscription, { loading }] = useMutation(UPDATE_SUBSCRIPTION, {
-    refetchQueries: ["GetSubscriptions"],
+  const [updateTransaction, { loading }] = useMutation(UPDATE_TRANSACTION, {
+    refetchQueries: ["GetTransactionHistory", "GetMonthlyHistory"],
   });
 
   // Helper to get currency symbol
@@ -28,91 +28,83 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
   const [selectedCompany, setSelectedCompany] = useState("google");
   const [customCompanyName, setCustomCompanyName] = useState("");
   const [serviceNameInput, setServiceNameInput] = useState("");
-  const [costInDollar, setCostInDollar] = useState("");
+  const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("entertainment");
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [paymentMethodId, setPaymentMethodId] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [alertEnabled, setAlertEnabled] = useState(false);
+  const [billingDate, setBillingDate] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [initialized, setInitialized] = useState(false);
-  
+
   const companyOptions = getCompanyOptions();
 
-  // Initialize form with subscription data
+  // Initialize form with transaction data
   useEffect(() => {
-    if (subscription && !initialized) {
+    if (transaction && !initialized) {
       // Find matching company or set to "other"
       const matchingCompany = companyOptions.find(
-        (opt) => opt.value.toLowerCase() === subscription.provider?.toLowerCase()
+        (opt) => opt.value.toLowerCase() === transaction.provider?.toLowerCase()
       );
-      
+
       if (matchingCompany) {
         setSelectedCompany(matchingCompany.value);
         setCustomCompanyName("");
       } else {
         setSelectedCompany("other");
-        setCustomCompanyName(subscription.provider || "");
+        setCustomCompanyName(transaction.provider || "");
       }
 
-      // Set other fields
-      setServiceNameInput(subscription.serviceName || "");
-      if (subscription.originalAmount != null && subscription.originalCurrency) {
+      setServiceNameInput(transaction.serviceName || "");
+      if (transaction.originalAmount != null && transaction.originalCurrency) {
         // Source of truth: the exact amount + currency the user entered.
-        setCostInDollar(String(subscription.originalAmount));
-        setCurrency(subscription.originalCurrency);
+        setAmount(String(transaction.originalAmount));
+        setCurrency(transaction.originalCurrency);
       } else {
-        // Legacy records: reconstruct from the stored USD value and saved currency.
-        const savedCurrency = subscription.currency || "USD";
-        const usdCost = subscription.costInDollar || 0;
+        // Legacy records: reconstruct from the stored USD value.
+        const savedCurrency = transaction.originalCurrency || "USD";
+        const usdCost = transaction.costInDollar || 0;
         const rateForCurrency = rates[savedCurrency] || 1;
-        setCostInDollar(parseFloat((usdCost * rateForCurrency).toFixed(2)).toString());
+        setAmount(parseFloat((usdCost * rateForCurrency).toFixed(2)).toString());
         setCurrency(savedCurrency);
       }
-      setCategory(subscription.category || "entertainment");
-      setBillingCycle(subscription.billingCycle || "monthly");
-      setPaymentMethodId(subscription.paymentMethodId || "");
-      setAlertEnabled(subscription.alertEnabled || false);
+      setCategory(transaction.category || "entertainment");
+      setBillingCycle(transaction.billingCycle || "monthly");
+      setPaymentMethodId(transaction.paymentMethodId || "");
 
       // Format date for input field
-      if (subscription.startDate) {
-        const date = new Date(parseInt(subscription.startDate));
+      if (transaction.billingDate) {
+        const date = new Date(parseInt(transaction.billingDate));
         if (!isNaN(date.getTime())) {
-          setStartDate(date.toISOString().split('T')[0]);
+          setBillingDate(date.toISOString().split("T")[0]);
         }
       }
-      
+
       setInitialized(true);
     }
-  }, [subscription, initialized, companyOptions, rates]);
+  }, [transaction, initialized, companyOptions, rates]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Get provider name
+
     const provider = selectedCompany === "other" ? customCompanyName : selectedCompany;
     const serviceName = serviceNameInput || provider;
-    
+
     // Send the entered amount + currency; the backend converts to USD authoritatively.
-    const subscriptionData = {
-      subscriptionId: subscription._id,
+    const transactionData = {
+      transactionId: transaction._id,
       serviceName: serviceName,
       provider: provider,
       category: category,
-      amount: parseFloat(costInDollar),
+      amount: parseFloat(amount),
       currency: currency,
-      startDate: startDate,
-      alertEnabled: alertEnabled,
       billingCycle: billingCycle,
+      billingDate: billingDate,
       paymentMethodId: paymentMethodId || null,
     };
-    
-    try {
-      await updateSubscription({ variables: { input: subscriptionData } });
 
-      toast.success("Subscription updated successfully");
-      
-      // Call onSuccess callback to close modal
+    try {
+      await updateTransaction({ variables: { input: transactionData } });
+      toast.success("Transaction updated successfully");
       if (onSuccess) {
         onSuccess();
       }
@@ -122,7 +114,7 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
     }
   };
 
-  if (!subscription) return null;
+  if (!transaction) return null;
 
   return (
     <div className="relative">
@@ -146,6 +138,7 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
                 {option.label}
               </option>
             ))}
+            <option value="other">Other</option>
           </select>
         </div>
 
@@ -204,7 +197,7 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-muted mb-1.5" htmlFor="amount">
-              Cost
+              Amount
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted font-medium text-sm">
@@ -216,9 +209,10 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
                 name="amount"
                 type="number"
                 step="0.01"
+                min="0"
                 placeholder="9.99"
-                value={costInDollar}
-                onChange={(e) => setCostInDollar(e.target.value)}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
                 required
               />
             </div>
@@ -274,7 +268,6 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
             name="paymentMethodId"
             value={paymentMethodId}
             onChange={(e) => setPaymentMethodId(e.target.value)}
-            required
           >
             <option value="">Select Payment Method</option>
             {userData?.authUser?.paymentMethods?.map((method) => (
@@ -301,36 +294,21 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
           )}
         </div>
 
-        {/* Start Date */}
+        {/* Billing Date */}
         <div>
-          <label className="block text-sm font-medium text-muted mb-1.5" htmlFor="startDate">
-            Start Date
+          <label className="block text-sm font-medium text-muted mb-1.5" htmlFor="billingDate">
+            Billing Date
           </label>
           <input
             type="date"
-            name="startDate"
-            id="startDate"
-            max={new Date().toISOString().split('T')[0]}
+            name="billingDate"
+            id="billingDate"
+            max={new Date().toISOString().split("T")[0]}
             className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            value={billingDate}
+            onChange={(e) => setBillingDate(e.target.value)}
             required
           />
-        </div>
-
-        {/* Alert Checkbox */}
-        <div className="flex items-start space-x-3 p-4 bg-accent/5 rounded-xl border border-accent/15">
-          <input
-            type="checkbox"
-            name="alertEnabled"
-            id="alertEnabled"
-            checked={alertEnabled}
-            onChange={(e) => setAlertEnabled(e.target.checked)}
-            className="mt-0.5 w-4 h-4 text-accent bg-surface border-border rounded focus:ring-accent focus:ring-2"
-          />
-          <label htmlFor="alertEnabled" className="text-sm text-foreground">
-            Send me a reminder 1 day before renewal
-          </label>
         </div>
 
         {/* Action Buttons */}
@@ -348,7 +326,7 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
             type="submit"
             disabled={loading}
           >
-            {loading ? "Updating..." : "Update Subscription"}
+            {loading ? "Updating..." : "Update Transaction"}
           </button>
         </div>
       </form>
@@ -356,4 +334,4 @@ const EditSubscriptionForm = ({ subscription, onSuccess, onCancel }) => {
   );
 };
 
-export default EditSubscriptionForm;
+export default EditTransactionForm;

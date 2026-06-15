@@ -1,36 +1,37 @@
-/* Simplified, professional styling - following universal design principles */
-
-/* Custom scrollbar - subtle and clean */
+/* Custom scrollbar - subtle and theme-aware */
 ::-webkit-scrollbar {
   width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 5px;
+  background: color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: color-mix(in srgb, var(--foreground) 30%, transparent);
 }
 
 /* Focus styles for accessibility */
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
+textarea:focus-visible,
 a:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
-/* Smooth transitions - only for necessary elements */
+/* Smooth transitions for interactive elements */
 button,
 a,
 input,
 select {
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease,
+    box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
 }

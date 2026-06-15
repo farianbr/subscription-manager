@@ -24,11 +24,23 @@ import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin
 import { ApolloServerPluginLandingPageDisabled } from "@apollo/server/plugin/disabled";
 import callServer from "./jobs/callServer.js";
 import { graphqlLimiter, authRateLimiter } from "./middleware/rateLimit.js";
+import logger from "./utils/logger.js";
+import { initErrorTracking, captureException } from "./services/errorTracking.js";
 
 dotenv.config();
 
 const PORT = process.env.PORT || 4000;
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+
+initErrorTracking();
+
+// Never let an unhandled async error take the process down silently.
+process.on("unhandledRejection", (reason) => {
+  captureException(reason, { kind: "unhandledRejection" });
+});
+process.on("uncaughtException", (err) => {
+  captureException(err, { kind: "uncaughtException" });
+});
 
 callServer.start();
 
@@ -63,7 +75,7 @@ const store = new MongoDBStore({
   collection: "sessions",
 });
 
-store.on("error", (err) => console.log(err));
+store.on("error", (err) => logger.error("Session store error:", err));
 
 app.use(
   session({
@@ -93,6 +105,18 @@ const server = new ApolloServer({
       : [ApolloServerPluginLandingPageLocalDefault()]),
   ],
   introspection: !isProduction, // disable schema introspection in prod
+  // Central place to shape outgoing GraphQL errors. Resolvers already log with
+  // context, and Apollo strips stack traces in production, so user-facing
+  // messages (e.g. "Invalid credentials") still reach the client unchanged.
+  // When a provider is wired in services/errorTracking.js, forward unexpected
+  // errors here, e.g. captureException(error, { code, path }).
+  formatError: (formattedError) => {
+    if (isProduction && formattedError.extensions) {
+      // Defense in depth: never leak internals even if something slips through.
+      delete formattedError.extensions.stacktrace;
+    }
+    return formattedError;
+  },
 });
 
 await server.start();
@@ -129,4 +153,4 @@ app.get("*path", (req, res) => {
 await new Promise((resolve) => httpServer.listen({ port: PORT }, resolve));
 await connectDB();
 
-console.log(`Server ready on port ${PORT}`);
+logger.info(`Server ready on port ${PORT}`, { env: process.env.NODE_ENV || "development" });

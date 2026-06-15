@@ -67,15 +67,15 @@ const SignUpPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+        <div className="bg-surface rounded-2xl shadow-sm border border-border p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-2">
               Create Account
             </h1>
-            <p className="text-slate-600">
+            <p className="text-muted">
               Start tracking your subscriptions today
             </p>
           </div>
@@ -109,7 +109,7 @@ const SignUpPage = () => {
             />
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-3">
+              <label className="block text-sm font-medium text-muted mb-3">
                 Gender
               </label>
               <div className="flex gap-6">
@@ -134,7 +134,7 @@ const SignUpPage = () => {
 
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-accent hover:bg-accent-hover text-accent-fg py-3 px-4 rounded-xl font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
               {loading ? "Creating account..." : "Sign Up"}
@@ -143,9 +143,9 @@ const SignUpPage = () => {
 
           {/* Footer */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted">
               Already have an account?{" "}
-              <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+              <Link to="/login" className="text-accent hover:opacity-80 font-medium">
                 Log in
               </Link>
             </p>

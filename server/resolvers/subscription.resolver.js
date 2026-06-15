@@ -4,6 +4,7 @@ import User from "../models/user.model.js";
 import { calculateNextBillingDate } from "../utils/billing.js";
 import { toUSD } from "../utils/exchangeRates.js";
 import { assertWithinSubscriptionLimit } from "../utils/planGuard.js";
+import logger from "../utils/logger.js";
 import {
   requireString,
   requireEnum,
@@ -49,7 +50,7 @@ const subscriptionResolver = {
         const subscriptions = await Subscription.find({ userId }).sort({ createdAt: -1 });
         return subscriptions;
       } catch (err) {
-        console.error("Error getting subscriptions:", err);
+        logger.error("Error getting subscriptions:", err);
         throw new Error("Error getting subscriptions");
       }
     },
@@ -114,7 +115,7 @@ const subscriptionResolver = {
 
         return newSubscription;
       } catch (err) {
-        console.error("Error creating subscription:", err);
+        logger.error("Error creating subscription:", err);
         throw new Error(err.message || "Error creating subscription");
       }
     },
@@ -169,7 +170,7 @@ const subscriptionResolver = {
         );
         return updatedSubscription;
       } catch (err) {
-        console.error("Error updating subscription:", err);
+        logger.error("Error updating subscription:", err);
         throw new Error(err.message || "Error updating subscription");
       }
     },
@@ -194,7 +195,7 @@ const subscriptionResolver = {
 
         return deletedSubscription;
       } catch (err) {
-        console.error("Error deleting subscription:", err);
+        logger.error("Error deleting subscription:", err);
         throw new Error(err.message || "Error deleting subscription");
       }
     },

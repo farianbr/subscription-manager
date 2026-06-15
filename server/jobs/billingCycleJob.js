@@ -3,11 +3,12 @@ import Subscription from "../models/subscription.model.js";
 import Transaction from "../models/transaction.model.js";
 import User from "../models/user.model.js";
 import { calculateNextBillingDate } from "../utils/billing.js";
+import logger from "../utils/logger.js";
 
 // Run every day at midnight
 export const billingCycleJob = cron.schedule("0 0 * * *", async () => {
   try {
-    console.log("Running billing cycle job...");
+    logger.info("Running billing cycle job...");
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -17,7 +18,7 @@ export const billingCycleJob = cron.schedule("0 0 * * *", async () => {
       nextBillingDate: { $lte: today }
     });
     
-    console.log(`Found ${dueSubscriptions.length} subscriptions due for billing`);
+    logger.info(`Found ${dueSubscriptions.length} subscriptions due for billing`);
     
     for (const subscription of dueSubscriptions) {
       try {
@@ -57,26 +58,26 @@ export const billingCycleJob = cron.schedule("0 0 * * *", async () => {
         subscription.alertSentForCurrentCycle = false; // Reset alert flag for new cycle
         await subscription.save();
         
-        console.log(`Created transaction for subscription: ${subscription.serviceName}`);
+        logger.info(`Created transaction for subscription: ${subscription.serviceName}`);
       } catch (err) {
-        console.error(`Error processing subscription ${subscription._id}:`, err);
+        logger.error(`Error processing subscription ${subscription._id}:`, err);
       }
     }
-    
-    console.log("Billing cycle job completed");
+
+    logger.info("Billing cycle job completed");
   } catch (err) {
-    console.error("Error in billing cycle job:", err);
+    logger.error("Error in billing cycle job:", err);
   }
 });
 
 // Function to start the job
 export function startBillingCycleJob() {
   billingCycleJob.start();
-  console.log("Billing cycle job started - runs daily at midnight");
+  logger.info("Billing cycle job started - runs daily at midnight");
 }
 
 // Function to stop the job
 export function stopBillingCycleJob() {
   billingCycleJob.stop();
-  console.log("Billing cycle job stopped");
+  logger.info("Billing cycle job stopped");
 }

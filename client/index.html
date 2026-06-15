@@ -13,6 +13,17 @@
     <link rel="manifest" href="/favicon/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Subscription Manager</title>
+    <script>
+      // Apply the saved/system theme before paint to avoid a flash of light mode.
+      (function () {
+        try {
+          var t = localStorage.getItem("theme");
+          if (t === "dark" || (!t && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

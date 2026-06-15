@@ -241,21 +241,21 @@ const SettingsPage = () => {
 
   if (userLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-12 h-12 border-3 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-12 h-12 border-3 border-border border-t-accent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-8">
+    <div className="min-h-screen bg-background pb-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         
         {/* Back Button */}
         <div className="mb-6">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center text-slate-600 hover:text-slate-900 font-medium transition-colors duration-200"
+            className="flex items-center text-muted hover:text-foreground font-medium transition-colors duration-200"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -266,20 +266,20 @@ const SettingsPage = () => {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Settings</h1>
-          <p className="text-slate-600">Manage your account and preferences</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
+          <p className="text-muted">Manage your account and preferences</p>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200">
-          <div className="border-b border-slate-200">
-            <nav className="flex space-x-8 px-6" aria-label="Tabs">
+        <div className="bg-surface rounded-2xl border border-border">
+          <div className="border-b border-border overflow-x-auto">
+            <nav className="flex space-x-6 sm:space-x-8 px-4 sm:px-6 min-w-max" aria-label="Tabs">
               <button
                 onClick={() => setActiveTab("profile")}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === "profile"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                    ? "border-accent text-accent"
+                    : "border-transparent text-muted hover:text-foreground hover:border-border"
                 }`}
               >
                 Profile
@@ -288,8 +288,8 @@ const SettingsPage = () => {
                 onClick={() => setActiveTab("security")}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === "security"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                    ? "border-accent text-accent"
+                    : "border-transparent text-muted hover:text-foreground hover:border-border"
                 }`}
               >
                 Security
@@ -298,8 +298,8 @@ const SettingsPage = () => {
                 onClick={() => setActiveTab("payments")}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === "payments"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                    ? "border-accent text-accent"
+                    : "border-transparent text-muted hover:text-foreground hover:border-border"
                 }`}
               >
                 Payment Methods
@@ -308,8 +308,8 @@ const SettingsPage = () => {
                 onClick={() => setActiveTab("plan")}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === "plan"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                    ? "border-accent text-accent"
+                    : "border-transparent text-muted hover:text-foreground hover:border-border"
                 }`}
               >
                 Plan
@@ -318,8 +318,8 @@ const SettingsPage = () => {
                 onClick={() => setActiveTab("notifications")}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === "notifications"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                    ? "border-accent text-accent"
+                    : "border-transparent text-muted hover:text-foreground hover:border-border"
                 }`}
               >
                 Notifications
@@ -332,16 +332,16 @@ const SettingsPage = () => {
             {activeTab === "profile" && (
               <div className="space-y-6 max-w-xl">
                 {/* Profile Picture Section */}
-                <div className="flex items-center space-x-6 pb-6 border-b border-slate-200">
+                <div className="flex items-center space-x-6 pb-6 border-b border-border">
                   <div className="relative">
                     {userData?.authUser?.profilePicture ? (
                       <img
                         src={userData.authUser.profilePicture}
                         alt={userData.authUser.name}
-                        className="w-24 h-24 rounded-full object-cover border-4 border-slate-200"
+                        className="w-24 h-24 rounded-full object-cover border-4 border-border"
                       />
                     ) : (
-                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-3xl border-4 border-slate-200">
+                      <div className="w-24 h-24 rounded-full bg-foreground flex items-center justify-center text-background font-bold text-3xl border-4 border-border">
                         {userData?.authUser?.name
                           ?.split(' ')
                           .map(n => n[0])
@@ -352,8 +352,8 @@ const SettingsPage = () => {
                     )}
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Profile Picture</h3>
-                    <p className="text-sm text-slate-600 mb-3">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Profile Picture</h3>
+                    <p className="text-sm text-muted mb-3">
                       Upload an image from your device
                     </p>
                     <div className="flex items-center space-x-3">
@@ -390,7 +390,7 @@ const SettingsPage = () => {
                       />
                       <label
                         htmlFor="profile-picture-upload"
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                        className="px-4 py-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-lg text-sm font-medium transition-colors cursor-pointer"
                       >
                         Choose Image
                       </label>
@@ -408,13 +408,13 @@ const SettingsPage = () => {
                               toast.error(err.message);
                             }
                           }}
-                          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors"
+                          className="px-4 py-2 bg-surface-2 hover:bg-border text-foreground rounded-lg text-sm font-medium transition-colors"
                         >
                           Remove
                         </button>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">
+                    <p className="text-xs text-muted mt-2">
                       JPG, PNG or GIF. Max size 5MB
                     </p>
                   </div>
@@ -423,39 +423,39 @@ const SettingsPage = () => {
                 {/* Profile Form */}
                 <form onSubmit={handleProfileSubmit} className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    <label className="block text-sm font-medium text-muted mb-1.5">
                       Full Name
                     </label>
                     <input
                       type="text"
                       value={profileData.name}
                       onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    <label className="block text-sm font-medium text-muted mb-1.5">
                       Email Address
                     </label>
                     <input
                       type="email"
                       value={profileData.email}
                       onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    <label className="block text-sm font-medium text-muted mb-1.5">
                       Currency
                     </label>
                     <select
                       value={profileData.currency}
                       onChange={(e) => setProfileData({ ...profileData, currency: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                     >
                       <option value="USD">USD - US Dollar</option>
                       <option value="EUR">EUR - Euro</option>
@@ -470,7 +470,7 @@ const SettingsPage = () => {
                   <button
                     type="submit"
                     disabled={profileLoading}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50"
+                    className="w-full bg-accent hover:bg-accent-hover text-accent-fg py-3 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50"
                   >
                     {profileLoading ? "Updating..." : "Update Profile"}
                   </button>
@@ -483,43 +483,43 @@ const SettingsPage = () => {
               <div className="space-y-8 max-w-xl">
                 {/* Change Password Section */}
                 <form onSubmit={handlePasswordSubmit} className="space-y-6">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Change Password</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Change Password</h3>
                   
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    <label className="block text-sm font-medium text-muted mb-1.5">
                       Current Password
                     </label>
                     <input
                       type="password"
                       value={passwordData.currentPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                       required
                     />
                   </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  <label className="block text-sm font-medium text-muted mb-1.5">
                     New Password
                   </label>
                   <input
                     type="password"
                     value={passwordData.newPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  <label className="block text-sm font-medium text-muted mb-1.5">
                     Confirm New Password
                   </label>
                   <input
                     type="password"
                     value={passwordData.confirmPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                     required
                   />
                 </div>
@@ -527,7 +527,7 @@ const SettingsPage = () => {
                 <button
                   type="submit"
                   disabled={passwordLoading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50"
+                  className="w-full bg-accent hover:bg-accent-hover text-accent-fg py-3 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50"
                 >
                   {passwordLoading ? "Updating..." : "Update Password"}
                 </button>
@@ -542,23 +542,23 @@ const SettingsPage = () => {
               <div className="space-y-8">
                 {/* Existing Payment Methods */}
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Your Payment Methods</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Your Payment Methods</h3>
                   {userData?.authUser?.paymentMethods?.length > 0 ? (
                     <div className="space-y-3">
                       {userData.authUser.paymentMethods.map((method) => (
                         <div
                           key={method.id}
-                          className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200"
+                          className="flex flex-wrap items-center justify-between gap-3 p-4 bg-surface-2 rounded-xl border border-border"
                         >
-                          <div className="flex items-center space-x-4">
-                            <div className="p-2 bg-blue-100 rounded-lg">
-                              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="flex items-center space-x-4 min-w-0">
+                            <div className="p-2 bg-accent/10 rounded-lg">
+                              <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                               </svg>
                             </div>
                             <div>
-                              <p className="font-medium text-slate-900">{method.name}</p>
-                              <p className="text-sm text-slate-500">
+                              <p className="font-medium text-foreground">{method.name}</p>
+                              <p className="text-sm text-muted">
                                 {method.type.toUpperCase()} {method.last4 && `•••• ${method.last4}`}
                               </p>
                             </div>
@@ -573,11 +573,11 @@ const SettingsPage = () => {
                               <button
                                 onClick={() => handleSetDefault(method.id)}
                                 disabled={settingDefaultId === method.id}
-                                className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                                className="px-3 py-1.5 text-sm text-accent hover:bg-accent/10 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
                               >
                                 {settingDefaultId === method.id ? (
                                   <>
-                                    <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                    <div className="w-3 h-3 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
                                     <span>Setting...</span>
                                   </>
                                 ) : (
@@ -603,16 +603,16 @@ const SettingsPage = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-slate-500 text-center py-8">No payment methods added yet</p>
+                    <p className="text-muted text-center py-8">No payment methods added yet</p>
                   )}
                 </div>
 
                 {/* Add New Payment Method */}
-                <div className="border-t border-slate-200 pt-8">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Add New Payment Method</h3>
+                <div className="border-t border-border pt-8">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Add New Payment Method</h3>
                   <form onSubmit={handleAddPayment} className="space-y-4 max-w-xl">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      <label className="block text-sm font-medium text-muted mb-1.5">
                         Payment Method Name
                       </label>
                       <input
@@ -620,20 +620,20 @@ const SettingsPage = () => {
                         value={paymentData.name}
                         onChange={(e) => setPaymentData({ ...paymentData, name: e.target.value })}
                         placeholder="e.g., Chase Visa, Cash Wallet"
-                        className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                         required
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        <label className="block text-sm font-medium text-muted mb-1.5">
                           Type
                         </label>
                         <select
                           value={paymentData.type}
                           onChange={(e) => setPaymentData({ ...paymentData, type: e.target.value })}
-                          className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                         >
                           <option value="card">Card</option>
                           <option value="cash">Cash</option>
@@ -643,7 +643,7 @@ const SettingsPage = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        <label className="block text-sm font-medium text-muted mb-1.5">
                           Last 4 Digits (Optional)
                         </label>
                         <input
@@ -652,7 +652,7 @@ const SettingsPage = () => {
                           onChange={(e) => setPaymentData({ ...paymentData, last4: e.target.value.slice(0, 4) })}
                           placeholder="1234"
                           maxLength="4"
-                          className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                         />
                       </div>
                     </div>
@@ -663,9 +663,9 @@ const SettingsPage = () => {
                         id="setDefault"
                         checked={paymentData.isDefault}
                         onChange={(e) => setPaymentData({ ...paymentData, isDefault: e.target.checked })}
-                        className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-accent border-border rounded focus:ring-accent"
                       />
-                      <label htmlFor="setDefault" className="text-sm text-slate-700">
+                      <label htmlFor="setDefault" className="text-sm text-muted">
                         Set as default payment method
                       </label>
                     </div>
@@ -673,7 +673,7 @@ const SettingsPage = () => {
                     <button
                       type="submit"
                       disabled={addingPayment}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50"
+                      className="w-full bg-accent hover:bg-accent-hover text-accent-fg py-3 px-4 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50"
                     >
                       {addingPayment ? "Adding..." : "Add Payment Method"}
                     </button>
@@ -694,15 +694,15 @@ const SettingsPage = () => {
       {/* Delete Confirmation Modal */}
       <Modal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)}>
         <div className="p-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-4">Delete Payment Method</h2>
-          <p className="text-slate-600 mb-6">
+          <h2 className="text-xl font-bold text-foreground mb-4">Delete Payment Method</h2>
+          <p className="text-muted mb-6">
             Are you sure you want to remove this payment method? This action cannot be undone.
           </p>
           <div className="flex justify-end space-x-3">
             <button
               onClick={() => setDeleteModalOpen(false)}
               disabled={deletingPaymentId !== null}
-              className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-muted hover:bg-surface-2 rounded-lg transition-colors disabled:opacity-50"
             >
               Cancel
             </button>

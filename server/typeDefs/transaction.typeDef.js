@@ -43,6 +43,18 @@ const transactionTypeDef = `#graphql
         paymentMethodId: String
     }
 
+    input UpdateTransactionInput {
+        transactionId: ID!
+        serviceName: String!
+        provider: String!
+        category: String!
+        amount: Float!
+        currency: String
+        billingCycle: String
+        billingDate: String
+        paymentMethodId: String
+    }
+
     type DeleteResponse {
         message: String!
     }
@@ -54,6 +66,7 @@ const transactionTypeDef = `#graphql
 
     type Mutation {
         createTransaction(input: CreateTransactionInput!): Transaction
+        updateTransaction(input: UpdateTransactionInput!): Transaction
         deleteTransaction(transactionId: ID!): DeleteResponse
     }
 `;

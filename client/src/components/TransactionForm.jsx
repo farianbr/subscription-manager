@@ -134,11 +134,11 @@ const TransactionForm = ({ onSuccess }) => {
         
         {/* Company/Provider Selector */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="company">
+          <label className="block text-sm font-medium text-muted mb-1.5" htmlFor="company">
             Select Provider
           </label>
           <select
-            className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
             id="company"
             name="company"
             value={selectedCompany}
@@ -156,11 +156,11 @@ const TransactionForm = ({ onSuccess }) => {
         {/* Custom Provider Name (shown when "Other" is selected) */}
         {selectedCompany === "other" && (
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="customName">
+            <label className="block text-sm font-medium text-muted mb-1.5" htmlFor="customName">
               Provider Name
             </label>
             <input
-              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
               id="customName"
               name="customName"
               type="text"
@@ -174,11 +174,11 @@ const TransactionForm = ({ onSuccess }) => {
 
         {/* Service Name */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="serviceName">
+          <label className="block text-sm font-medium text-muted mb-1.5" htmlFor="serviceName">
             Service Name (Optional)
           </label>
           <input
-            className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
             id="serviceName"
             name="serviceName"
             type="text"
@@ -189,11 +189,11 @@ const TransactionForm = ({ onSuccess }) => {
         {/* Cost with Currency Selection */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="currency">
+            <label className="block text-sm font-medium text-muted mb-1.5" htmlFor="currency">
               Currency
             </label>
             <select
-              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
               id="currency"
               name="currency"
               value={selectedCurrency}
@@ -207,13 +207,13 @@ const TransactionForm = ({ onSuccess }) => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="amount">
+            <label className="block text-sm font-medium text-muted mb-1.5" htmlFor="amount">
               Cost
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">{getCurrencySymbolFor(selectedCurrency)}</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted font-medium">{getCurrencySymbolFor(selectedCurrency)}</span>
               <input
-                className="w-full pl-7 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-full pl-7 pr-3 py-2.5 bg-surface border border-border rounded-xl text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
                 id="amount"
                 name="amount"
                 type="number"
@@ -228,11 +228,11 @@ const TransactionForm = ({ onSuccess }) => {
         {/* Category & Billing Cycle */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="category">
+            <label className="block text-sm font-medium text-muted mb-1.5" htmlFor="category">
               Category
             </label>
             <select
-              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
               id="category"
               name="category"
             >
@@ -244,11 +244,11 @@ const TransactionForm = ({ onSuccess }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="billingCycle">
+            <label className="block text-sm font-medium text-muted mb-1.5" htmlFor="billingCycle">
               Billing Cycle
             </label>
             <select
-              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
               id="billingCycle"
               name="billingCycle"
             >
@@ -261,37 +261,37 @@ const TransactionForm = ({ onSuccess }) => {
 
         {/* Payment Method Section */}
         {showPaymentForm ? (
-          <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="space-y-4 p-4 bg-surface-2 rounded-xl border border-border">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-slate-700">Add Payment Method</h3>
+              <h3 className="text-sm font-medium text-muted">Add Payment Method</h3>
               {userData?.authUser?.paymentMethods && userData.authUser.paymentMethods.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setShowPaymentForm(false)}
-                  className="text-xs text-slate-600 hover:text-slate-900"
+                  className="text-xs text-muted hover:text-foreground"
                 >
                   Use existing
                 </button>
               )}
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Method Name</label>
+              <label className="block text-xs font-medium text-muted mb-1">Method Name</label>
               <input
                 type="text"
                 value={paymentData.name}
                 onChange={(e) => setPaymentData({ ...paymentData, name: e.target.value })}
-                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm"
+                className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-sm"
                 placeholder="e.g., Visa Card"
                 required
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Type</label>
+                <label className="block text-xs font-medium text-muted mb-1">Type</label>
                 <select
                   value={paymentData.type}
                   onChange={(e) => setPaymentData({ ...paymentData, type: e.target.value })}
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-sm"
                 >
                   <option value="card">Card</option>
                   <option value="cash">Cash</option>
@@ -300,12 +300,12 @@ const TransactionForm = ({ onSuccess }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Last 4 Digits</label>
+                <label className="block text-xs font-medium text-muted mb-1">Last 4 Digits</label>
                 <input
                   type="text"
                   value={paymentData.last4}
                   onChange={(e) => setPaymentData({ ...paymentData, last4: e.target.value.slice(0, 4) })}
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-sm"
                   placeholder="1234"
                   maxLength="4"
                 />
@@ -315,18 +315,18 @@ const TransactionForm = ({ onSuccess }) => {
               type="button"
               onClick={handleAddPaymentMethod}
               disabled={addingPayment || !paymentData.name}
-              className="w-full bg-slate-700 hover:bg-slate-800 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+              className="w-full bg-foreground hover:opacity-90 text-background py-2 rounded-lg text-sm font-medium disabled:opacity-50"
             >
               {addingPayment ? "Adding..." : "Add Payment Method"}
             </button>
           </div>
         ) : (
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="paymentMethodId">
+            <label className="block text-sm font-medium text-muted mb-1.5" htmlFor="paymentMethodId">
               Payment Method
             </label>
             <select
-              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
               id="paymentMethodId"
               name="paymentMethodId"
               value={selectedPaymentMethod}
@@ -342,7 +342,7 @@ const TransactionForm = ({ onSuccess }) => {
             <button
               type="button"
               onClick={() => setShowPaymentForm(true)}
-              className="text-xs text-blue-600 hover:underline mt-1"
+              className="text-xs text-accent hover:underline mt-1"
             >
               + Add new payment method
             </button>
@@ -351,7 +351,7 @@ const TransactionForm = ({ onSuccess }) => {
 
         {/* Start Date - Always visible */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="startDate">
+          <label className="block text-sm font-medium text-muted mb-1.5" htmlFor="startDate">
             Start Date
           </label>
           <input
@@ -360,27 +360,27 @@ const TransactionForm = ({ onSuccess }) => {
             id="startDate"
             max={new Date().toISOString().split('T')[0]}
             defaultValue={new Date().toISOString().split('T')[0]}
-            className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
             required
           />
         </div>
 
         {/* Alert Checkbox */}
-        <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg border border-blue-100">
+        <div className="flex items-start space-x-3 p-4 bg-accent/5 rounded-xl border border-accent/15">
           <input
             type="checkbox"
             id="alertEnabled"
             name="alertEnabled"
-            className="mt-0.5 w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
+            className="mt-0.5 w-4 h-4 text-accent bg-surface border-border rounded focus:ring-accent focus:ring-2"
           />
-          <label htmlFor="alertEnabled" className="text-sm text-slate-700">
+          <label htmlFor="alertEnabled" className="text-sm text-foreground">
             Send me a reminder 1 day before renewal
           </label>
         </div>
 
         {/* Submit Button */}
         <button
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-accent hover:bg-accent-hover text-accent-fg font-medium py-3 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           type="submit"
           disabled={loading}
         >

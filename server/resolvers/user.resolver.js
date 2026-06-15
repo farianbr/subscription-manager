@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { sendMail } from "../utils/mailer.js";
 import { sendVerificationEmail } from "../utils/emails.js";
+import logger from "../utils/logger.js";
 import {
   requireString,
   requireEmail,
@@ -36,7 +37,7 @@ const userResolver = {
         const user = await context.getUser();
         return user;
       } catch (err) {
-        console.error("Error in authUser: ", err);
+        logger.error("Error in authUser: ", err);
         throw new Error("Internal server error");
       }
     },
@@ -52,7 +53,7 @@ const userResolver = {
 
         return await User.findById(userId);
       } catch (err) {
-        console.error("Error in user query:", err);
+        logger.error("Error in user query:", err);
         throw new Error(err.message || "Error getting user");
       }
     },
@@ -87,7 +88,7 @@ const userResolver = {
         try {
           await issueEmailVerification(newUser);
         } catch (mailErr) {
-          console.error("Failed to send verification email:", mailErr.message);
+          logger.error("Failed to send verification email:", mailErr.message);
         }
 
         // Automatically log in the user after signup
@@ -95,7 +96,7 @@ const userResolver = {
 
         return newUser;
       } catch (err) {
-        console.error("Error in signUp: ", err);
+        logger.error("Error in signUp: ", err);
         throw new Error(err.message || "Internal server error");
       }
     },
@@ -114,7 +115,7 @@ const userResolver = {
         await context.login(user);
         return user;
       } catch (err) {
-        console.error("Error in login:", err);
+        logger.error("Error in login:", err);
         throw new Error(err.message || "Internal server error");
       }
     },
@@ -129,7 +130,7 @@ const userResolver = {
 
         return { message: "Logged out successfully" };
       } catch (err) {
-        console.error("Error in logout:", err);
+        logger.error("Error in logout:", err);
         throw new Error(err.message || "Internal server error");
       }
     },
@@ -158,7 +159,7 @@ const userResolver = {
 
         return updatedUser;
       } catch (err) {
-        console.error("Error in updateProfile:", err);
+        logger.error("Error in updateProfile:", err);
         throw new Error(err.message || "Internal server error");
       }
     },
@@ -183,7 +184,7 @@ const userResolver = {
 
         return updatedUser;
       } catch (err) {
-        console.error("Error in updatePassword:", err);
+        logger.error("Error in updatePassword:", err);
         throw new Error(err.message || "Internal server error");
       }
     },
@@ -201,7 +202,7 @@ const userResolver = {
 
         return updatedUser;
       } catch (err) {
-        console.error("Error in updateProfilePicture:", err);
+        logger.error("Error in updateProfilePicture:", err);
         throw new Error(err.message || "Internal server error");
       }
     },
@@ -234,7 +235,7 @@ const userResolver = {
 
         return user;
       } catch (err) {
-        console.error("Error in addPaymentMethod:", err);
+        logger.error("Error in addPaymentMethod:", err);
         throw new Error(err.message || "Internal server error");
       }
     },
@@ -251,7 +252,7 @@ const userResolver = {
         await user.save();
         return user;
       } catch (err) {
-        console.error("Error in removePaymentMethod:", err);
+        logger.error("Error in removePaymentMethod:", err);
         throw new Error(err.message || "Internal server error");
       }
     },
@@ -268,7 +269,7 @@ const userResolver = {
         await user.save();
         return user;
       } catch (err) {
-        console.error("Error in setDefaultPaymentMethod:", err);
+        logger.error("Error in setDefaultPaymentMethod:", err);
         throw new Error(err.message || "Internal server error");
       }
     },
@@ -313,7 +314,7 @@ const userResolver = {
 
         return { message: "If that email is registered, a reset link has been sent." };
       } catch (err) {
-        console.error("Error in forgotPassword:", err);
+        logger.error("Error in forgotPassword:", err);
         throw new Error(err.message || "Internal server error");
       }
     },
@@ -339,7 +340,7 @@ const userResolver = {
 
         return { message: "Password has been reset successfully. You can now log in." };
       } catch (err) {
-        console.error("Error in resetPassword:", err);
+        logger.error("Error in resetPassword:", err);
         throw new Error(err.message || "Internal server error");
       }
     },
@@ -365,7 +366,7 @@ const userResolver = {
 
         return { message: "Email verified successfully." };
       } catch (err) {
-        console.error("Error in verifyEmail:", err);
+        logger.error("Error in verifyEmail:", err);
         throw new Error(err.message || "Internal server error");
       }
     },
@@ -381,7 +382,7 @@ const userResolver = {
         await issueEmailVerification(user);
         return { message: "Verification email sent." };
       } catch (err) {
-        console.error("Error in resendVerificationEmail:", err);
+        logger.error("Error in resendVerificationEmail:", err);
         throw new Error(err.message || "Internal server error");
       }
     },
@@ -409,7 +410,7 @@ const userResolver = {
         );
         return updatedUser;
       } catch (err) {
-        console.error("Error in updateNotificationPreferences:", err);
+        logger.error("Error in updateNotificationPreferences:", err);
         throw new Error(err.message || "Internal server error");
       }
     },
@@ -437,7 +438,7 @@ const userResolver = {
 
         return { message: "Your account has been deleted." };
       } catch (err) {
-        console.error("Error in deleteAccount:", err);
+        logger.error("Error in deleteAccount:", err);
         throw new Error(err.message || "Internal server error");
       }
     },

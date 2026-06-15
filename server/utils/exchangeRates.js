@@ -2,6 +2,8 @@
 // Fetches live USD-based rates from a free, no-key API, caches them in memory,
 // and falls back to a static table if the network is unavailable.
 
+import logger from "./logger.js";
+
 export const SUPPORTED_CURRENCIES = [
   "USD", "EUR", "GBP", "INR", "BDT", "CAD", "AUD", "JPY", "CHF", "CNY",
 ];
@@ -65,7 +67,7 @@ export async function getRates() {
     const rates = await fetchLiveRates();
     cache = { rates, fetchedAt: Date.now(), source: "live" };
   } catch (err) {
-    console.error("Exchange rate fetch failed, using fallback:", err.message);
+    logger.error("Exchange rate fetch failed, using fallback:", err.message);
     if (!cache.rates) {
       cache = { rates: pickSupported(FALLBACK_RATES), fetchedAt: Date.now(), source: "fallback" };
     }

@@ -3,6 +3,7 @@ import Subscription from "../models/subscription.model.js";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
 import { sendRenewalReminderEmail } from "../utils/emails.js";
+import logger from "../utils/logger.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_LEAD_DAYS = 30; // upper bound on any user's reminderDaysBefore
@@ -73,7 +74,7 @@ export async function processRenewalReminders() {
       await sub.save();
       sent += 1;
     } catch (err) {
-      console.error(`Reminder failed for subscription ${sub._id}:`, err.message);
+      logger.error(`Reminder failed for subscription ${sub._id}:`, err.message);
     }
   }
   return sent;
@@ -85,9 +86,9 @@ export function scheduleDailyReminders() {
     async () => {
       try {
         const count = await processRenewalReminders();
-        console.log(`Reminder job: ${count} reminder(s) sent.`);
+        logger.info(`Reminder job: ${count} reminder(s) sent.`);
       } catch (err) {
-        console.error("Reminder job error:", err);
+        logger.error("Reminder job error:", err);
       }
     },
     { timezone: "Asia/Dhaka" }

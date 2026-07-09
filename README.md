@@ -1,134 +1,111 @@
-# 📊 Subscription Manager
+# Subscription Manager
 
-A full-stack SaaS for tracking personal subscriptions — see what you pay, when it
-renews, and where your money goes. Built with **GraphQL/Apollo + MongoDB** on the
-backend and **React + Vite + Tailwind CSS** on the front end, with a typography-driven UI and full dark mode.
+A web app for keeping track of what I'm subscribed to — the slow drip of Netflix,
+Spotify, iCloud, and everything else — so I actually know what I'm paying and when
+the next charge hits.
 
----
+It's full-stack: React/Vite on the front, a GraphQL API (Apollo) over MongoDB on
+the back. I built it like a real SaaS — plans, feature gating, a Stripe-shaped
+billing seam — but in practice it's a single-user tool, so there's no team or
+sharing machinery.
 
-## ✨ Features
+## What it does
 
-- **Authentication & accounts**
-  - Email/password signup with session-cookie auth (Passport.js), bcrypt hashing.
-  - Email verification (24h tokens), password reset, and account deletion with
-    full data cascade.
-  - Per-user notification preferences (email reminders, reminder lead time).
+Add your subscriptions (amount, currency, billing cycle, renewal date) and the
+dashboard shows the monthly and annual damage, what's coming up, and where the
+money goes by category and provider. A nightly cron advances billing cycles and
+sends renewal reminders — email plus in-app notifications.
 
-- **Subscriptions & history**
-  - Create / edit / delete subscriptions with provider, category, billing cycle,
-    payment method, and renewal date.
-  - Month-by-month transaction history with server-side aggregation and pagination.
-  - Automatic billing rollover and renewal reminders via scheduled cron jobs
-    (email + in-app notifications).
+A couple of things I cared about getting right:
 
-- **Multi-currency**
-  - 10 supported currencies (USD, EUR, GBP, INR, BDT, CAD, AUD, JPY, CHF, CNY).
-  - The backend is the FX source of truth: live rates (cached 12h) with a static
-    fallback. Amounts are stored non-lossily (original amount + currency **and** a
-    normalized USD value).
+- **Multi-currency without losing precision.** You enter an amount in whatever
+  currency; the server converts to USD using live rates (cached 12h, static
+  fallback) and stores *both* the original and the normalized value, so nothing
+  gets mangled by rounding. On screen, amounts are shown as whole numbers.
+- **Gating that actually gates.** Free caps you at 10 subscriptions; Premium
+  unlocks the rest. It's enforced on the server, not just hidden in the UI.
 
-- **Plans & monetization**
-  - Free (up to 10 subscriptions), Premium, and Family tiers with feature gating.
-  - Plan config is centralized in `server/config/plans.js`; billing is abstracted
-    behind a Stripe-ready seam (`server/services/billing.js`).
+Premium adds:
 
-- **Premium UX**
-  - Light/dark themes (system-aware, persisted), restrained color, large whitespace.
-  - Responsive dashboard with charts, loading skeletons, and toast feedback.
+- An **Insights** page: a 6-month spend forecast built from each subscription's
+  real billing schedule (not a flat average), plus price-change detection pulled
+  from your transaction history.
+- **AI insights** — a short, plain-language read on your spending. It calls an
+  OpenAI-compatible API (I use Groq), writes in your own currency, and caches the
+  result, only regenerating when your data actually changes. No "generate" button
+  to babysit.
+- **Better reminders** — several lead times per renewal (a week before *and* the
+  day before, say), not just one.
+- **Calendar sync** — connect Google Calendar and your renewals show up as events
+  that add, update, and remove themselves as you edit subscriptions. There's also
+  a private `.ics` feed if you'd rather subscribe from Apple or Outlook.
 
----
+## Running it locally
 
-## 🛠️ Tech Stack
-
-**Frontend:** React 19 (Vite), Apollo Client, React Router, Tailwind CSS v4,
-Chart.js, React Hot Toast.
-
-**Backend:** Node.js + Express 5, Apollo Server 5 (GraphQL), Passport.js,
-bcryptjs, node-cron, Nodemailer (Gmail SMTP).
-
-**Database:** MongoDB (Mongoose 8).
-
-**Hardening:** Helmet, express-rate-limit (general + auth-specific), centralized
-input validation, ownership checks on all mutations.
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 20+ (the test suite uses the built-in `node:test` runner)
-- A MongoDB connection string (e.g. MongoDB Atlas)
-
-### Setup
+You'll need Node 20+ and a MongoDB connection string (Atlas works).
 
 ```bash
-# 1. Install dependencies (root = server, plus the client)
 npm install
 npm install --prefix client
+cp .env.example .env          # fill in MONGO_URI and SESSION_SECRET at least
 
-# 2. Configure environment
-cp .env.example .env   # then fill in MONGO_URI, SESSION_SECRET, etc.
-
-# 3. Run in development (server on :4000, client on :5173)
-npm run dev                  # backend with nodemon
-npm run dev --prefix client  # frontend (separate terminal)
+npm run dev                   # API on :4000
+npm run dev --prefix client   # client on :5173, separate terminal
 ```
 
-### Production build & run
+AI and Google Calendar are optional. Leave their keys blank and those features
+just report "not configured" instead of breaking.
+
+For production:
 
 ```bash
-npm run build   # installs deps and builds the client into client/dist
-npm start       # serves the API + built client (NODE_ENV=production)
+npm run build   # builds the client into client/dist
+npm start       # serves the API and the built client
 ```
 
-### Tests
+Tests are plain `node:test` (`npm test`). They cover the things that are easy to
+get subtly wrong: input validation, billing-date math, plan gating, the iCal
+builder, reminder lead-time resolution, and the token encryption / signed OAuth
+state.
 
-```bash
-npm test        # runs the node:test suite (validators, billing, plans/gating)
-```
+## Environment
 
----
+The full list is in `.env.example`; these are the ones that matter:
 
-## 🔐 Environment Variables
-
-See [`.env.example`](.env.example) for the full list. Key ones:
-
-| Variable | Required | Purpose |
+| Variable | When you need it | What it's for |
 | --- | --- | --- |
-| `MONGO_URI` | ✅ | MongoDB connection string |
-| `SESSION_SECRET` | ✅ | Express session signing secret |
-| `CLIENT_URL` | ✅ (prod) | Allowed CORS origin for the frontend |
-| `GMAIL_USER` / `GMAIL_PASS` | ✅ (email) | Gmail SMTP creds (use an App Password) |
-| `IMGBB_API_KEY` | optional | Profile picture uploads |
-| `STRIPE_SECRET_KEY` | optional | Real billing; mock mode when unset |
-| `SENTRY_DSN` | optional | Error tracking; logs-only when unset |
-| `LOG_LEVEL` | optional | `debug`/`info`/`warn`/`error` |
-| `SELF_PING_URL` | optional | Keep-alive ping for sleeping free-tier hosts |
+| `MONGO_URI` | always | MongoDB connection string |
+| `SESSION_SECRET` | always | Signs sessions, and derives the key used to encrypt stored OAuth tokens |
+| `APP_URL` | production | Public base URL — used to build the `.ics` feed and the Google OAuth redirect |
+| `CLIENT_URL` | production | CORS origin and where OAuth redirects land |
+| `GMAIL_USER` / `GMAIL_PASS` | for email | Gmail SMTP (use an App Password) |
+| `AI_API_KEY` (+ `AI_BASE_URL`, `AI_MODEL`) | for AI insights | OpenAI-compatible key; defaults target Groq / `llama-3.3-70b-versatile` |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | for calendar sync | OAuth client credentials |
+| `STRIPE_SECRET_KEY` | for real billing | Unset = mock mode (plan changes apply immediately) |
 
----
+Getting Google Calendar working is the fiddly part: create an OAuth 2.0 **Web
+application** client in Google Cloud Console, enable the Calendar API, and add
+`<APP_URL>/auth/google/calendar/callback` to its authorized redirect URIs — it
+has to match exactly, trailing slashes and all. The scopes it asks for are
+`openid`, `email`, and `calendar.events`.
 
-## 🏗️ Project Structure
+## How it's laid out
 
-```
-server/
-  config/      plans.js — single source of truth for tiers & feature flags
-  middleware/  rate limiting
-  models/      Mongoose models (user, subscription, transaction, notification)
-  resolvers/   GraphQL resolvers (auth checks + validation)
-  services/    billing.js (Stripe seam), errorTracking.js (Sentry seam)
-  typeDefs/    GraphQL schema
-  utils/       logger, validators, exchangeRates (FX), emails, billing helpers
-  jobs/        node-cron jobs (billing rollover, reminders, keep-alive)
-  tests/       node:test unit tests
-client/
-  src/         React app (pages, components, contexts, GraphQL operations)
-```
+The backend is a fairly standard Apollo setup. `server/config/plans.js` is the
+single source of truth for what each plan includes, and `planGuard.js` enforces
+it. Anything that talks to the outside world lives in `server/services/`
+(billing, AI, Google Calendar) or `server/routes/` (the `.ics` feed and the OAuth
+redirect flow, which sit outside GraphQL because they're plain redirects). Cron
+jobs — billing rollover, reminders, keep-alive — are in `server/jobs/`.
 
----
+The client is a Vite React app under `client/src/`: `pages/` for the routes,
+`components/dashboard/` for the cards and charts, `context/` for currency and
+theme, and `lib/` for the shared plan/feature hook and dashboard math.
 
-## 📌 Roadmap / Future Improvements
+## Rough edges
 
-- Wire Stripe Checkout into the billing seam for real paid upgrades.
-- Server-side analytics aggregation for dashboard charts.
-- Export subscription data (CSV/PDF) and push notifications.
-- Expand the test suite to resolver/integration coverage.
+- Billing is mock-only for now — the Stripe seam exists (`services/billing.js`)
+  but isn't wired to Checkout, so plan changes just take effect immediately.
+- The client ships as one big bundle; code-splitting is on the list.
+- It's single-user by design, so there's no multi-tenant hardening beyond the
+  per-user ownership checks on every mutation.

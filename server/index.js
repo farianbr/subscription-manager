@@ -25,6 +25,7 @@ import { ApolloServerPluginLandingPageDisabled } from "@apollo/server/plugin/dis
 import callServer from "./jobs/callServer.js";
 import { registerCalendarFeed } from "./routes/calendarFeed.js";
 import { registerGoogleCalendarRoutes } from "./routes/googleCalendar.js";
+import { registerImageUpload } from "./routes/imageUpload.js";
 import { graphqlLimiter, authRateLimiter } from "./middleware/rateLimit.js";
 import logger from "./utils/logger.js";
 import { initErrorTracking, captureException } from "./services/errorTracking.js";
@@ -59,11 +60,31 @@ const isProduction = process.env.NODE_ENV === "production";
 // Behind a proxy (Render/Heroku/etc.) so secure cookies work over forwarded HTTPS
 if (isProduction) app.set("trust proxy", 1);
 
-// Security headers. CSP is disabled for now since the SPA + Apollo sandbox
-// need a tailored policy — tracked as a follow-up in the hardening roadmap.
+// Security headers. In production we serve the built SPA same-origin, so a
+// tight CSP applies cleanly. In development it's disabled because the Apollo
+// sandbox landing page loads inline/remote assets a strict policy would block.
 app.use(
   helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: isProduction
+      ? {
+          directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'"],
+            // React/framer-motion apply inline style attributes at runtime.
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            // Company logos (logo.dev) and uploaded avatars (ibb.co) are https.
+            imgSrc: ["'self'", "data:", "https:"],
+            fontSrc: ["'self'", "data:"],
+            // GraphQL + the image-upload proxy are same-origin.
+            connectSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            baseUri: ["'self'"],
+            frameAncestors: ["'self'"],
+            formAction: ["'self'"],
+            upgradeInsecureRequests: [],
+          },
+        }
+      : false,
     crossOriginEmbedderPolicy: false,
   })
 );
@@ -150,6 +171,9 @@ registerCalendarFeed(app);
 
 // Google Calendar OAuth (session-authenticated start, signed-state callback).
 registerGoogleCalendarRoutes(app);
+
+// Session-authenticated image-upload proxy (keeps the ImgBB key server-side).
+registerImageUpload(app);
 
 app.use(express.static(path.join(__dirname, "client/dist")));
 

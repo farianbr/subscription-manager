@@ -1,55 +1,47 @@
+import { API_BASE } from "./apiBase";
+
+const VALID_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+/** Read a File as a base64 string (without the `data:...;base64,` prefix). */
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+    reader.onerror = () => reject(new Error("Failed to read the image file"));
+    reader.readAsDataURL(file);
+  });
+}
+
 /**
- * Upload an image to ImgBB and return the URL
+ * Upload an image via the server proxy (which forwards to ImgBB with a
+ * server-side key) and return the hosted URL.
  * @param {File} file - The image file to upload
  * @returns {Promise<string>} - The uploaded image URL
  */
 export const uploadImageToImgBB = async (file) => {
-  // Validate file
   if (!file) {
     throw new Error("No file provided");
   }
-
-  // Check file type
-  const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
-  if (!validTypes.includes(file.type)) {
+  if (!VALID_TYPES.includes(file.type)) {
     throw new Error("Invalid file type. Please upload a JPG, PNG, GIF, or WebP image.");
   }
-
-  // Check file size (max 5MB)
-  const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-  if (file.size > maxSize) {
+  if (file.size > MAX_SIZE) {
     throw new Error("Image must be less than 5MB");
   }
 
-  // Get API key from environment variable
-  const apiKey = import.meta.env.VITE_IMGBB_API_KEY;
-  if (!apiKey) {
-    throw new Error("ImgBB API key is not configured");
+  const base64 = await fileToBase64(file);
+
+  const response = await fetch(`${API_BASE}/api/upload/image`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image: base64, type: file.type }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.url) {
+    throw new Error(data.error || "Failed to upload image");
   }
-
-  // Create form data
-  const formData = new FormData();
-  formData.append("image", file);
-
-  try {
-    // Upload to ImgBB
-    const response = await fetch(
-      `https://api.imgbb.com/1/upload?key=${apiKey}`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-
-    const data = await response.json();
-
-    if (data.success && data.data?.url) {
-      return data.data.url;
-    } else {
-      throw new Error(data.error?.message || "Upload failed");
-    }
-  } catch (error) {
-    console.error("Image upload error:", error);
-    throw new Error(error.message || "Failed to upload image");
-  }
+  return data.url;
 };

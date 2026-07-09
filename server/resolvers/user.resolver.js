@@ -142,22 +142,44 @@ const userResolver = {
         const user = await context.getUser();
         if (!user) throw new Error("Unauthorized");
 
-        const { name, email, currency } = input;
-        
-        if (email && email !== user.email) {
-          const existingUser = await User.findOne({ email });
-          if (existingUser) throw new Error("Email already in use");
+        const { currency } = input;
+        const update = {};
+        let emailChanged = false;
+
+        if (input.name) {
+          update.name = requireString(input.name, "Name", { max: 100 });
         }
+
+        if (input.email) {
+          // Validate + normalize just like signup so a changed address can't
+          // bypass the format/case rules the account was created with.
+          const email = requireEmail(input.email);
+          if (email !== user.email) {
+            const existingUser = await User.findOne({ email });
+            if (existingUser) throw new Error("Email already in use");
+            update.email = email;
+            // A new address is unverified until its own link is clicked.
+            update.emailVerified = false;
+            emailChanged = true;
+          }
+        }
+
+        if (currency) update.currency = currency;
 
         const updatedUser = await User.findByIdAndUpdate(
           user._id,
-          { 
-            ...(name && { name }),
-            ...(email && { email }),
-            ...(currency && { currency })
-          },
+          update,
           { new: true }
         );
+
+        // Best-effort: send a verification link to the new address.
+        if (emailChanged) {
+          try {
+            await issueEmailVerification(updatedUser);
+          } catch (mailErr) {
+            logger.error("Failed to send verification email after email change:", mailErr.message);
+          }
+        }
 
         return updatedUser;
       } catch (err) {

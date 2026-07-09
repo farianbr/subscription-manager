@@ -19,6 +19,7 @@
     "@graphql-tools/merge": "^9.1.1",
     "bcryptjs": "^3.0.2",
     "connect-mongodb-session": "^5.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "express-rate-limit": "^8.5.2",

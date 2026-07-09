@@ -1,15 +1,5 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import HomePage from "./pages/HomePage";
-import LoginPage from "./pages/LoginPage";
-import SignUpPage from "./pages/SignUpPage";
-import SettingsPage from "./pages/SettingsPage";
-import HistoryPage from "./pages/HistoryPage";
-import InsightsPage from "./pages/InsightsPage";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import NotFound from "./pages/NotFound";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import VerifyEmailPage from "./pages/VerifyEmailPage";
 import Header from "./components/ui/Header";
 import VerificationBanner from "./components/VerificationBanner";
 import ScrollToTop from "./components/ui/ScrollToTop";
@@ -17,6 +7,29 @@ import { useQuery } from "@apollo/client/react";
 import { GET_AUTHENTICATED_USER } from "./graphql/queries/user.queries";
 import { Toaster } from "react-hot-toast";
 import "./App.css";
+
+// Route-level code splitting: the chart-heavy dashboard/insights pages and the
+// rarely-visited auth pages each load on demand instead of bloating the initial
+// bundle.
+const HomePage = lazy(() => import("./pages/HomePage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const SignUpPage = lazy(() => import("./pages/SignUpPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const HistoryPage = lazy(() => import("./pages/HistoryPage"));
+const InsightsPage = lazy(() => import("./pages/InsightsPage"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
+
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-9 h-9 border-3 border-border border-t-accent rounded-full animate-spin"></div>
+    </div>
+  );
+}
 
 function App() {
   const { loading, data } = useQuery(GET_AUTHENTICATED_USER);
@@ -38,6 +51,7 @@ function App() {
       <ScrollToTop />
       {data?.authUser && <Header />}
       {data?.authUser && <VerificationBanner />}
+      <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route
           path="/"
@@ -76,6 +90,7 @@ function App() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
       <Toaster />
     </>
   );

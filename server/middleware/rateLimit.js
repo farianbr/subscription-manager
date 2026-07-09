@@ -28,6 +28,16 @@ export const publicRouteLimiter = rateLimit({
   message: "Too many requests, please slow down.",
 });
 
+// Authenticated image-upload proxy. Uploads are heavy and infrequent, so a
+// tight cap keeps the endpoint from being abused to relay traffic to ImgBB.
+export const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many uploads, please slow down." },
+});
+
 // Sensitive GraphQL operations identified by name or by field appearing in the query body.
 const SENSITIVE_OPERATIONS = ["Login", "SignUp", "ForgotPassword", "ResetPassword"];
 const SENSITIVE_FIELDS = ["login", "signUp", "forgotPassword", "resetPassword"];

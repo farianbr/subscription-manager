@@ -55,7 +55,8 @@ export const billingCycleJob = cron.schedule("0 0 * * *", async () => {
         );
         
         subscription.nextBillingDate = nextBillingDate;
-        subscription.alertSentForCurrentCycle = false; // Reset alert flag for new cycle
+        subscription.alertSentForCurrentCycle = false; // Reset alert flags for new cycle
+        subscription.remindersSentDays = [];
         await subscription.save();
         
         logger.info(`Created transaction for subscription: ${subscription.serviceName}`);

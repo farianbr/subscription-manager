@@ -6,29 +6,66 @@ import {
   UPDATE_NOTIFICATION_PREFERENCES,
   RESEND_VERIFICATION,
 } from "../graphql/mutations/user.mutation";
+import { usePlan, FEATURES } from "../lib/plan";
+
+// Preset lead times (days before renewal) offered for advanced reminders.
+const LEAD_PRESETS = [
+  { days: 14, label: "2 weeks" },
+  { days: 7, label: "1 week" },
+  { days: 3, label: "3 days" },
+  { days: 1, label: "1 day" },
+  { days: 0, label: "Day of" },
+];
 
 const NotificationSettings = () => {
   const { data } = useQuery(GET_AUTHENTICATED_USER);
   const [updatePrefs, { loading }] = useMutation(UPDATE_NOTIFICATION_PREFERENCES);
   const [resend, { loading: resending }] = useMutation(RESEND_VERIFICATION);
+  const { hasFeature } = usePlan();
+  const advanced = hasFeature(FEATURES.ADVANCED_REMINDERS);
 
   const user = data?.authUser;
   const [prefs, setPrefs] = useState({
     emailReminders: true,
     reminderDaysBefore: 1,
+    reminderLeadDays: [],
     productUpdates: false,
   });
 
   useEffect(() => {
     if (user?.notificationPreferences) {
-      const { emailReminders, reminderDaysBefore, productUpdates } = user.notificationPreferences;
-      setPrefs({ emailReminders, reminderDaysBefore, productUpdates });
+      const { emailReminders, reminderDaysBefore, reminderLeadDays, productUpdates } =
+        user.notificationPreferences;
+      setPrefs({
+        emailReminders,
+        reminderDaysBefore,
+        reminderLeadDays: reminderLeadDays || [],
+        productUpdates,
+      });
     }
   }, [user]);
 
+  const toggleLead = (days) => {
+    setPrefs((p) => {
+      const has = p.reminderLeadDays.includes(days);
+      const next = has
+        ? p.reminderLeadDays.filter((d) => d !== days)
+        : [...p.reminderLeadDays, days];
+      return { ...p, reminderLeadDays: next.sort((a, b) => b - a) };
+    });
+  };
+
   const handleSave = async () => {
     try {
-      await updatePrefs({ variables: { input: prefs } });
+      // Only send fields the current plan is allowed to change. reminderLeadDays
+      // is gated server-side; free users never include it.
+      const input = {
+        emailReminders: prefs.emailReminders,
+        reminderDaysBefore: prefs.reminderDaysBefore,
+        productUpdates: prefs.productUpdates,
+      };
+      if (advanced) input.reminderLeadDays = prefs.reminderLeadDays;
+      await updatePrefs({ variables: { input } });
       toast.success("Notification preferences saved");
     } catch (err) {
       toast.error(err.message);
@@ -84,17 +121,64 @@ const NotificationSettings = () => {
           />
         </label>
 
-        <div className="p-4 bg-surface-2 rounded-xl border border-border">
-          <label className="block text-sm font-medium text-foreground mb-1.5">Remind me this many days before renewal</label>
-          <input
-            type="number"
-            min="0"
-            max="30"
-            value={prefs.reminderDaysBefore}
-            onChange={(e) => setPrefs({ ...prefs, reminderDaysBefore: Number(e.target.value) })}
-            className="w-24 px-3 py-2 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
-          />
-        </div>
+        {advanced ? (
+          <div className="p-4 bg-surface-2 rounded-xl border border-border">
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-foreground">
+                Remind me before each renewal
+              </label>
+              <span className="text-[11px] font-medium text-accent uppercase tracking-wide">
+                Premium
+              </span>
+            </div>
+            <p className="text-xs text-muted mb-3">
+              Pick one or more lead times — you'll get a reminder at each.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {LEAD_PRESETS.map((preset) => {
+                const selected = prefs.reminderLeadDays.includes(preset.days);
+                return (
+                  <button
+                    key={preset.days}
+                    type="button"
+                    onClick={() => toggleLead(preset.days)}
+                    aria-pressed={selected}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                      selected
+                        ? "bg-accent text-accent-fg border-accent"
+                        : "bg-surface text-muted border-border hover:text-foreground"
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
+            </div>
+            {prefs.reminderLeadDays.length === 0 && (
+              <p className="text-xs text-muted mt-3">
+                No lead times selected — falls back to a single reminder {prefs.reminderDaysBefore}{" "}
+                day{prefs.reminderDaysBefore === 1 ? "" : "s"} before.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="p-4 bg-surface-2 rounded-xl border border-border">
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Remind me this many days before renewal
+            </label>
+            <input
+              type="number"
+              min="0"
+              max="30"
+              value={prefs.reminderDaysBefore}
+              onChange={(e) => setPrefs({ ...prefs, reminderDaysBefore: Number(e.target.value) })}
+              className="w-24 px-3 py-2 bg-surface border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+            />
+            <p className="text-xs text-muted mt-2">
+              Upgrade to Premium to set multiple reminders — e.g. a week before and the day before.
+            </p>
+          </div>
+        )}
 
         <label className="flex items-center justify-between p-4 bg-surface-2 rounded-xl border border-border">
           <div>

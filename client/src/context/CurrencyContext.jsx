@@ -74,14 +74,10 @@ export const CurrencyProvider = ({ children }) => {
     };
 
     const symbol = currencySymbols[currency] || currency;
-    
-    // For BDT and INR, round to integer (no decimals)
-    let formattedAmount;
-    if (currency === 'BDT' || currency === 'INR') {
-      formattedAmount = Math.round(convertedAmount).toString();
-    } else {
-      formattedAmount = convertedAmount.toFixed(2);
-    }
+
+    // Money is displayed rounded to whole numbers across the app for a cleaner,
+    // consistent look. Stored values remain exact — this only affects display.
+    const formattedAmount = Math.round(convertedAmount).toLocaleString();
 
     return showSymbol ? `${symbol}${formattedAmount}` : formattedAmount;
   };

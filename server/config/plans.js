@@ -1,5 +1,8 @@
 // Single source of truth for SaaS plans, limits, and feature gating.
 // Prices are placeholders until Stripe products/prices are wired up.
+//
+// This is a single-user product, so there is no membership/sharing tier —
+// every real capability lives on Premium.
 
 export const FEATURES = {
   UNLIMITED_SUBSCRIPTIONS: "unlimited_subscriptions",
@@ -7,8 +10,6 @@ export const FEATURES = {
   ADVANCED_REMINDERS: "advanced_reminders",
   AI_INSIGHTS: "ai_insights",
   CALENDAR_INTEGRATION: "calendar_integration",
-  SHARED_SUBSCRIPTIONS: "shared_subscriptions",
-  COST_SPLITTING: "cost_splitting",
 };
 
 const PREMIUM_FEATURES = [
@@ -25,7 +26,6 @@ export const PLANS = {
     name: "Free",
     priceMonthly: 0,
     maxSubscriptions: 10,
-    maxMembers: 1,
     features: [],
   },
   premium: {
@@ -33,20 +33,7 @@ export const PLANS = {
     name: "Premium",
     priceMonthly: 4.99,
     maxSubscriptions: null, // null = unlimited
-    maxMembers: 1,
     features: PREMIUM_FEATURES,
-  },
-  family: {
-    id: "family",
-    name: "Family",
-    priceMonthly: 7.99,
-    maxSubscriptions: null,
-    maxMembers: 5,
-    features: [
-      ...PREMIUM_FEATURES,
-      FEATURES.SHARED_SUBSCRIPTIONS,
-      FEATURES.COST_SPLITTING,
-    ],
   },
 };
 

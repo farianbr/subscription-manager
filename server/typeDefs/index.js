@@ -6,6 +6,9 @@ import subscriptionTypeDef from "./subscription.typeDef.js";
 import exchangeRateTypeDef from "./exchangeRate.typeDef.js";
 import planTypeDef from "./plan.typeDef.js";
 import notificationTypeDef from "./notification.typeDef.js";
+import calendarTypeDef from "./calendar.typeDef.js";
+import aiTypeDef from "./ai.typeDef.js";
+import analyticsTypeDef from "./analytics.typeDef.js";
 
 const mergedTypeDefs = mergeTypeDefs([
   userTypeDef,
@@ -14,6 +17,9 @@ const mergedTypeDefs = mergeTypeDefs([
   exchangeRateTypeDef,
   planTypeDef,
   notificationTypeDef,
+  calendarTypeDef,
+  aiTypeDef,
+  analyticsTypeDef,
 ]);
 
 export default mergedTypeDefs;

@@ -21,7 +21,7 @@ import { uploadImageToImgBB } from "../lib/imageUpload";
 const SettingsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: userData, loading: userLoading } = useQuery(GET_AUTHENTICATED_USER);
   const { setCurrency: setGlobalCurrency } = useCurrency();
   
@@ -82,6 +82,25 @@ const SettingsPage = () => {
       });
     }
   }, [userData]);
+
+  // Surface the Google Calendar OAuth result (redirected back with ?gcal=...).
+  useEffect(() => {
+    const gcal = searchParams.get("gcal");
+    if (!gcal) return;
+    const messages = {
+      connected: ["success", "Google Calendar connected — your subscriptions are syncing."],
+      denied: ["error", "Google Calendar connection was cancelled."],
+      unconfigured: ["error", "Google Calendar isn't configured on the server."],
+      forbidden: ["error", "Google Calendar sync requires a Premium plan."],
+      error: ["error", "Couldn't connect Google Calendar. Please try again."],
+    };
+    const [kind, msg] = messages[gcal] || ["error", "Google Calendar: unexpected response."];
+    toast[kind](msg);
+    // Strip the param so a refresh doesn't re-fire the toast.
+    const next = new URLSearchParams(searchParams);
+    next.delete("gcal");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   // Sync activeTab with location state or URL parameter changes
   useEffect(() => {
@@ -327,7 +346,7 @@ const SettingsPage = () => {
             </nav>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {/* Profile Tab */}
             {activeTab === "profile" && (
               <div className="space-y-6 max-w-xl">

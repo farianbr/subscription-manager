@@ -13,6 +13,7 @@ export const GET_AUTHENTICATED_USER = gql`
       notificationPreferences {
         emailReminders
         reminderDaysBefore
+        reminderLeadDays
         productUpdates
       }
       paymentMethods {

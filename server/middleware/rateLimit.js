@@ -18,6 +18,16 @@ const authLimiter = rateLimit({
   message: { error: "Too many attempts. Please try again later." },
 });
 
+// For unauthenticated/redirect endpoints outside GraphQL: the token-based .ics
+// feed and the Google OAuth routes. Defense-in-depth against scraping/abuse.
+export const publicRouteLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many requests, please slow down.",
+});
+
 // Sensitive GraphQL operations identified by name or by field appearing in the query body.
 const SENSITIVE_OPERATIONS = ["Login", "SignUp", "ForgotPassword", "ResetPassword"];
 const SENSITIVE_FIELDS = ["login", "signUp", "forgotPassword", "resetPassword"];

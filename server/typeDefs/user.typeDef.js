@@ -15,12 +15,15 @@ const userTypeDef = `#graphql
     type NotificationPreferences {
         emailReminders: Boolean!
         reminderDaysBefore: Int!
+        # Nullable for legacy users whose docs predate this field.
+        reminderLeadDays: [Int!]
         productUpdates: Boolean!
     }
 
     input NotificationPreferencesInput {
         emailReminders: Boolean
         reminderDaysBefore: Int
+        reminderLeadDays: [Int!]
         productUpdates: Boolean
     }
 

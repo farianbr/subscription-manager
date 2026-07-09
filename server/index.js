@@ -23,6 +23,8 @@ import { startBillingCycleJob } from "./jobs/billingCycleJob.js";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import { ApolloServerPluginLandingPageDisabled } from "@apollo/server/plugin/disabled";
 import callServer from "./jobs/callServer.js";
+import { registerCalendarFeed } from "./routes/calendarFeed.js";
+import { registerGoogleCalendarRoutes } from "./routes/googleCalendar.js";
 import { graphqlLimiter, authRateLimiter } from "./middleware/rateLimit.js";
 import logger from "./utils/logger.js";
 import { initErrorTracking, captureException } from "./services/errorTracking.js";
@@ -141,6 +143,13 @@ if (isProduction) {
   });
 }
 
+
+// Public token-authenticated calendar feed (no session; must precede the SPA
+// catch-all so it isn't swallowed by the index.html handler).
+registerCalendarFeed(app);
+
+// Google Calendar OAuth (session-authenticated start, signed-state callback).
+registerGoogleCalendarRoutes(app);
 
 app.use(express.static(path.join(__dirname, "client/dist")));
 

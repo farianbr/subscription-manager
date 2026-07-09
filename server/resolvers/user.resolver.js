@@ -7,6 +7,8 @@ import crypto from "crypto";
 import { sendMail } from "../utils/mailer.js";
 import { sendVerificationEmail } from "../utils/emails.js";
 import logger from "../utils/logger.js";
+import { requireFeature } from "../utils/planGuard.js";
+import { FEATURES } from "../config/plans.js";
 import {
   requireString,
   requireEmail,
@@ -392,7 +394,17 @@ const userResolver = {
         const user = await context.getUser();
         if (!user) throw new Error("Unauthorized");
 
-        const prefs = user.notificationPreferences || {};
+        // Work off a plain object so array fields serialize cleanly.
+        const existing = user.notificationPreferences?.toObject
+          ? user.notificationPreferences.toObject()
+          : { ...(user.notificationPreferences || {}) };
+        const prefs = {
+          emailReminders: existing.emailReminders ?? true,
+          reminderDaysBefore: existing.reminderDaysBefore ?? 1,
+          reminderLeadDays: existing.reminderLeadDays ?? [],
+          productUpdates: existing.productUpdates ?? false,
+        };
+
         if (input.emailReminders !== undefined) prefs.emailReminders = Boolean(input.emailReminders);
         if (input.productUpdates !== undefined) prefs.productUpdates = Boolean(input.productUpdates);
         if (input.reminderDaysBefore !== undefined) {
@@ -401,6 +413,20 @@ const userResolver = {
             throw new Error("Reminder days must be between 0 and 30");
           }
           prefs.reminderDaysBefore = days;
+        }
+        if (input.reminderLeadDays !== undefined) {
+          // Multiple reminders per cycle is a Premium ("advanced reminders") feature.
+          requireFeature(user, FEATURES.ADVANCED_REMINDERS);
+          const cleaned = [...new Set(input.reminderLeadDays.map((d) => Number(d)))];
+          for (const d of cleaned) {
+            if (!Number.isInteger(d) || d < 0 || d > 30) {
+              throw new Error("Each reminder lead day must be between 0 and 30");
+            }
+          }
+          if (cleaned.length > 5) {
+            throw new Error("You can set at most 5 reminder lead times");
+          }
+          prefs.reminderLeadDays = cleaned.sort((a, b) => b - a);
         }
 
         const updatedUser = await User.findByIdAndUpdate(

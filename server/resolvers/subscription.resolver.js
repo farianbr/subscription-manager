@@ -4,6 +4,7 @@ import User from "../models/user.model.js";
 import { calculateNextBillingDate } from "../utils/billing.js";
 import { toUSD } from "../utils/exchangeRates.js";
 import { assertWithinSubscriptionLimit } from "../utils/planGuard.js";
+import { syncOnCreate, syncOnUpdate, syncOnDelete } from "../services/calendarSync.js";
 import logger from "../utils/logger.js";
 import {
   requireString,
@@ -113,6 +114,9 @@ const subscriptionResolver = {
         });
         await newTransaction.save();
 
+        // Push to Google Calendar if the user has sync enabled (best-effort).
+        await syncOnCreate(user, newSubscription);
+
         return newSubscription;
       } catch (err) {
         logger.error("Error creating subscription:", err);
@@ -168,6 +172,10 @@ const subscriptionResolver = {
           { $set: update },
           { new: true }
         );
+
+        // Reflect the change in Google Calendar if sync is enabled (best-effort).
+        await syncOnUpdate(user, updatedSubscription);
+
         return updatedSubscription;
       } catch (err) {
         logger.error("Error updating subscription:", err);
@@ -189,6 +197,9 @@ const subscriptionResolver = {
         const deletedSubscription = await Subscription.findByIdAndDelete(
           subscriptionId
         );
+
+        // Remove the matching Google Calendar event if sync is enabled (best-effort).
+        await syncOnDelete(user, subscription);
 
         // Optionally delete associated transactions
         // await Transaction.deleteMany({ subscriptionId });

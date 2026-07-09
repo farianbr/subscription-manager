@@ -4,6 +4,7 @@ import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
 import SettingsPage from "./pages/SettingsPage";
 import HistoryPage from "./pages/HistoryPage";
+import InsightsPage from "./pages/InsightsPage";
 import NotFound from "./pages/NotFound";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -59,6 +60,12 @@ function App() {
           path="/history"
           element={
             data.authUser ? <HistoryPage /> : <Navigate to="/login" />
+          }
+        />
+        <Route
+          path="/insights"
+          element={
+            data.authUser ? <InsightsPage /> : <Navigate to="/login" />
           }
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />

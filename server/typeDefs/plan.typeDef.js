@@ -4,7 +4,6 @@ const planTypeDef = `#graphql
         name: String!
         priceMonthly: Float!
         maxSubscriptions: Int
-        maxMembers: Int!
         features: [String!]!
     }
 

@@ -29,13 +29,14 @@ const Modal = ({ isOpen, onClose, title, children }) => {
         onClick={onClose}
       ></div>
 
-      {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-2xl bg-surface rounded-2xl p-6 sm:p-8 shadow-2xl border border-border">
+      {/* Modal — starts near the top on mobile so long forms don't clip, and
+          the whole dialog scrolls within the viewport. */}
+      <div className="flex min-h-full items-start sm:items-center justify-center p-3 sm:p-4">
+        <div className="relative w-full max-w-2xl my-2 sm:my-0 bg-surface rounded-2xl p-5 sm:p-8 shadow-2xl border border-border">
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full text-muted hover:text-foreground hover:bg-surface-2 transition-colors duration-200"
+            className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 p-2 rounded-full text-muted hover:text-foreground hover:bg-surface-2 transition-colors duration-200"
             title="Close"
             aria-label="Close"
           >
@@ -46,8 +47,8 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 
           {/* Modal header */}
           {title && (
-            <div className="mb-6">
-              <h3 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h3>
+            <div className="mb-6 pr-10">
+              <h3 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">{title}</h3>
             </div>
           )}
 

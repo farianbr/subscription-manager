@@ -53,13 +53,25 @@ const subscriptionSchema = new mongoose.Schema({
   paymentMethodId: {
     type: String,
   },
-  alertEnabled: { 
-    type: Boolean, 
-    default: false 
+  alertEnabled: {
+    type: Boolean,
+    default: false
   },
-  alertSentForCurrentCycle: { 
-    type: Boolean, 
-    default: false 
+  alertSentForCurrentCycle: {
+    type: Boolean,
+    default: false
+  },
+  // Advanced reminders can fire more than once per cycle (e.g. 7 days and 1 day
+  // before). This records which lead-day thresholds have already been sent for
+  // the current billing cycle; reset when the cycle rolls over.
+  remindersSentDays: {
+    type: [Number],
+    default: [],
+  },
+  // Google Calendar event id when the owner has calendar sync enabled, so we
+  // can update/delete the corresponding event.
+  googleEventId: {
+    type: String,
   },
 }, { timestamps: true });
 

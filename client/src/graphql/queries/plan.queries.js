@@ -7,7 +7,6 @@ export const GET_PLANS = gql`
       name
       priceMonthly
       maxSubscriptions
-      maxMembers
       features
     }
   }

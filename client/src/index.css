@@ -3,34 +3,77 @@
 /* Class-based dark mode: `.dark` on a parent toggles `dark:` utilities. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ---- Design tokens (Apple-inspired, minimal & neutral) ---- */
+/* ---- Design tokens ----
+   Warm neutral surfaces, graphite primary action, color reserved for
+   financial status and category identity. Chart colors live in lib/palette.js
+   and must stay in sync with the viz tokens below. */
 :root {
-  --background: #f5f5f7;
+  --background: #f6f5f2;
   --surface: #ffffff;
-  --surface-2: #f5f5f7;
-  --foreground: #1d1d1f;
-  --muted: #6e6e73;
-  --border-color: #e4e4e7;
-  --accent: #0071e3;
-  --accent-hover: #0066cc;
+  --surface-2: #f3f2ee;
+  --foreground: #1c1c1e;
+  --muted: #6e6d69;
+  --border-color: #e8e6e1;
+  --border-strong: #d9d7d1;
+
+  /* Graphite primary action (premium monochrome, not SaaS blue) */
+  --accent: #1c1c1e;
+  --accent-hover: #333338;
   --accent-fg: #ffffff;
-  --ring: #0071e3;
+  --ring: #1c1c1e;
+
+  /* Financial status */
+  --success: #2f7d4f;
+  --success-soft: rgba(47, 125, 79, 0.1);
+  --warning: #9a6a10;
+  --warning-soft: rgba(154, 106, 16, 0.1);
+  --danger: #bf3f34;
+  --danger-soft: rgba(191, 63, 52, 0.08);
+
+  /* Data accent (spend trend, provider bars) — refined indigo */
+  --viz-accent: #4a3aa7;
+  --viz-accent-soft: rgba(74, 58, 167, 0.09);
+
+  /* Category identity (validated categorical set) */
+  --cat-utilities: #2a78d6;
+  --cat-productivity: #1baf7a;
+  --cat-education: #eda100;
+  --cat-entertainment: #e87ba4;
+  --cat-other: #8e8d88;
 }
 
 .dark {
-  --background: #000000;
-  --surface: #1c1c1e;
-  --surface-2: #2c2c2e;
-  --foreground: #f5f5f7;
-  --muted: #98989d;
-  --border-color: rgba(255, 255, 255, 0.12);
-  --accent: #0a84ff;
-  --accent-hover: #409cff;
-  --accent-fg: #ffffff;
-  --ring: #0a84ff;
+  --background: #101012;
+  --surface: #1a1a1d;
+  --surface-2: #242428;
+  --foreground: #f4f4f5;
+  --muted: #9c9ba1;
+  --border-color: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  --accent: #f4f4f5;
+  --accent-hover: #ffffff;
+  --accent-fg: #141416;
+  --ring: #f4f4f5;
+
+  --success: #55b078;
+  --success-soft: rgba(85, 176, 120, 0.14);
+  --warning: #d9a13d;
+  --warning-soft: rgba(217, 161, 61, 0.14);
+  --danger: #e0655a;
+  --danger-soft: rgba(224, 101, 90, 0.12);
+
+  --viz-accent: #9085e9;
+  --viz-accent-soft: rgba(144, 133, 233, 0.13);
+
+  --cat-utilities: #3987e5;
+  --cat-productivity: #199e70;
+  --cat-education: #c98500;
+  --cat-entertainment: #d55181;
+  --cat-other: #77767d;
 }
 
-/* Expose tokens as Tailwind color utilities (bg-surface, text-foreground, …). */
+/* Expose tokens as Tailwind utilities (bg-surface, text-foreground, …). */
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
@@ -38,17 +81,30 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-border: var(--border-color);
+  --color-border-strong: var(--border-strong);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-fg: var(--accent-fg);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-viz-accent: var(--viz-accent);
+  --color-viz-accent-soft: var(--viz-accent-soft);
 
   --radius-xl2: 1.25rem;
+
+  --shadow-card: 0 1px 2px rgba(20, 20, 20, 0.04);
+  --shadow-lifted: 0 2px 8px rgba(20, 20, 20, 0.06), 0 1px 2px rgba(20, 20, 20, 0.04);
+  --shadow-overlay: 0 16px 48px rgba(20, 20, 20, 0.18), 0 4px 12px rgba(20, 20, 20, 0.08);
 }
 
 /* ---- Base typography ---- */
 * {
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Roboto",
-    "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI Variable Text",
+    "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
 }
 
 html {
@@ -66,4 +122,26 @@ body {
 
 h1, h2, h3, h4 {
   letter-spacing: -0.022em;
+}
+
+/* Columns of money/dates align vertically; hero figures keep proportional digits. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Shared visible keyboard focus for all interactive elements. */
+:where(button, a, input, select, textarea, [role="switch"], [role="menuitem"]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

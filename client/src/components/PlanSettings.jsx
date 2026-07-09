@@ -2,6 +2,8 @@ import { useQuery, useMutation } from "@apollo/client/react";
 import toast from "react-hot-toast";
 import { GET_PLANS, GET_PLAN_USAGE } from "../graphql/queries/plan.queries";
 import { CHANGE_PLAN } from "../graphql/mutations/plan.mutation";
+import { FEATURES } from "../lib/plan";
+import CalendarFeedCard from "./CalendarFeedCard";
 
 const FEATURE_LABELS = {
   unlimited_subscriptions: "Unlimited subscriptions",
@@ -9,8 +11,6 @@ const FEATURE_LABELS = {
   advanced_reminders: "Advanced reminders",
   ai_insights: "AI insights",
   calendar_integration: "Calendar integration",
-  shared_subscriptions: "Shared subscriptions",
-  cost_splitting: "Cost splitting",
 };
 
 // Baseline perks every plan includes, shown above plan-specific features.
@@ -53,6 +53,8 @@ const PlanSettings = () => {
   const limit = usage?.subscriptionLimit;
   const count = usage?.subscriptionCount ?? 0;
   const usagePct = limit ? Math.min(100, Math.round((count / limit) * 100)) : 0;
+  const features = usage?.features || [];
+  const hasCalendar = features.includes(FEATURES.CALENDAR_INTEGRATION);
 
   return (
     <div className="space-y-8">
@@ -111,7 +113,6 @@ const PlanSettings = () => {
                   .map((f) => (
                     <li key={f} className="text-foreground">{FEATURE_LABELS[f] || f}</li>
                   ))}
-                {plan.maxMembers > 1 && <li className="text-foreground">Up to {plan.maxMembers} members</li>}
               </ul>
 
               <button
@@ -129,6 +130,14 @@ const PlanSettings = () => {
           );
         })}
       </div>
+
+      {/* Premium integrations */}
+      {hasCalendar && (
+        <div>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Integrations</h3>
+          <CalendarFeedCard />
+        </div>
+      )}
 
       <p className="text-xs text-muted">
         Payments are not yet enabled — plan changes apply immediately for now.

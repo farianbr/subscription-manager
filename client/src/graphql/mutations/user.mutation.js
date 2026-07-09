@@ -165,6 +165,7 @@ export const UPDATE_NOTIFICATION_PREFERENCES = gql`
       notificationPreferences {
         emailReminders
         reminderDaysBefore
+        reminderLeadDays
         productUpdates
       }
     }

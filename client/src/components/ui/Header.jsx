@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { MdLogout, MdHistory } from "react-icons/md";
+import { Link, NavLink } from "react-router-dom";
+import { MdLogout, MdHistory, MdInsights } from "react-icons/md";
 import { IoSettingsSharp, IoSunnyOutline, IoMoonOutline } from "react-icons/io5";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { LOGOUT } from "../../graphql/mutations/user.mutation";
@@ -29,8 +29,9 @@ const Header = () => {
   }, []);
 
   const handleLogout = async () => {
+    // Keep the menu open so the button's loading spinner is visible; the header
+    // unmounts on success when the auth query clears.
     try {
-      setMenuOpen(false);
       await logout();
       client.resetStore();
     } catch (err) {
@@ -44,6 +45,13 @@ const Header = () => {
 
   const menuItem =
     "flex items-center gap-3 w-full px-4 py-2.5 text-sm text-foreground hover:bg-surface-2 transition-colors";
+
+  const navLink = ({ isActive }) =>
+    `inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+      isActive
+        ? "bg-surface-2 text-foreground"
+        : "text-muted hover:text-foreground hover:bg-surface-2"
+    }`;
 
   return (
     <header className="bg-surface/80 backdrop-blur-xl border-b border-border sticky top-0 z-50">
@@ -59,6 +67,18 @@ const Header = () => {
 
           {/* Actions */}
           <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
+            {/* Primary nav */}
+            <nav className="flex items-center gap-0.5 sm:gap-1 mr-0.5 sm:mr-1">
+              <NavLink to="/insights" className={navLink} title="Insights">
+                <MdInsights className="w-5 h-5" aria-hidden="true" />
+                <span className="hidden md:inline">Insights</span>
+              </NavLink>
+              <NavLink to="/history" className={navLink} title="History">
+                <MdHistory className="w-5 h-5" aria-hidden="true" />
+                <span className="hidden md:inline">History</span>
+              </NavLink>
+            </nav>
+
             <button onClick={toggleTheme} className={iconButton} title="Toggle theme" aria-label="Toggle theme">
               {theme === "dark" ? (
                 <IoSunnyOutline className="w-5 h-5" />
@@ -99,10 +119,6 @@ const Header = () => {
                     {user?.email && <p className="text-xs text-muted truncate">{user.email}</p>}
                   </div>
                   <div className="py-1">
-                    <Link to="/history" onClick={() => setMenuOpen(false)} className={menuItem}>
-                      <MdHistory className="w-5 h-5 text-muted" />
-                      <span>History</span>
-                    </Link>
                     <Link to="/settings" onClick={() => setMenuOpen(false)} className={menuItem}>
                       <IoSettingsSharp className="w-5 h-5 text-muted" />
                       <span>Settings</span>

@@ -16,9 +16,14 @@ export function assertWithinSubscriptionLimit(user, currentCount) {
   }
 }
 
+/** Non-throwing check: does the user's plan include a feature? */
+export function userHasFeature(user, feature) {
+  return planHasFeature(user?.plan, feature);
+}
+
 /** Enforce that the user's plan includes a feature, else prompt to upgrade. */
 export function requireFeature(user, feature) {
-  if (!planHasFeature(user.plan, feature)) {
-    throw new Error("This feature requires a plan upgrade.");
+  if (!userHasFeature(user, feature)) {
+    throw new Error("This feature requires a Premium plan.");
   }
 }

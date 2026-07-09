@@ -151,6 +151,12 @@ const SignUpPage = () => {
             </p>
           </div>
         </div>
+
+        <p className="mt-6 text-center text-xs text-muted">
+          <Link to="/privacy" className="hover:text-foreground hover:underline">
+            Privacy Policy
+          </Link>
+        </p>
       </div>
     </div>
   );
